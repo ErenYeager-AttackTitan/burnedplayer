@@ -1,0 +1,275 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover" />
+  <title>Random SFW Anime Meme</title>
+  <meta name="color-scheme" content="dark light" />
+  <style>
+    :root{
+      --bg:#0b0b10; --card:#13131a; --text:#eaeaf2; --muted:#a8a8b3;
+      --brand:#22c55e; --ring:#6b9cff; --shadow:0 10px 30px rgba(0,0,0,.35), 0 2px 8px rgba(0,0,0,.25);
+    }
+    @media (prefers-color-scheme: light){
+      :root{ --bg:#f6f7fb; --card:#fff; --text:#0e0f14; --muted:#5a5f6d; --brand:#16a34a; --ring:#306bff; --shadow:0 12px 40px rgba(0,0,0,.12), 0 2px 10px rgba(0,0,0,.08); }
+    }
+    *{ box-sizing:border-box; }
+    html,body{ height:100%; }
+    body{
+      margin:0; font:16px/1.45 system-ui,-apple-system,Segoe UI,Roboto,Helvetica,Arial;
+      color:var(--text);
+      background: radial-gradient(1200px 600px at 70% -10%, rgba(34,197,94,.12), transparent 60%),
+                  radial-gradient(1000px 500px at 20% 120%, rgba(48,107,255,.14), transparent 60%),
+                  var(--bg);
+      display:grid; place-items:center; padding:18px;
+    }
+    .wrap{ width:min(100%, 980px); }
+    header{ display:flex; align-items:center; justify-content:space-between; gap:12px; margin:8px 0 16px; }
+    .title{ display:flex; align-items:center; gap:10px; flex-wrap:wrap; }
+    .logo{ width:38px; height:38px; border-radius:10px; background:linear-gradient(135deg, var(--brand), #16a34a); display:grid; place-items:center; color:#fff; font-weight:800; box-shadow:var(--shadow); }
+    h1{ font-size:clamp(18px,3.4vw,26px); margin:0; letter-spacing:.2px; }
+    .badge{ padding:6px 10px; border-radius:999px; font-size:13px; font-weight:600; background:rgba(34,197,94,.14); color:var(--brand); border:1px solid rgba(34,197,94,.35); }
+    .card{ background:var(--card); border:1px solid rgba(125,125,160,.14); border-radius:16px; box-shadow:var(--shadow); overflow:hidden; }
+    .media{ position:relative; overflow:hidden; background:#0a0a0f; min-height:220px; display:grid; place-items:center; }
+    .media img{ max-width:100%; width:100%; height:auto; object-fit:contain; cursor:zoom-in; user-select:none; -webkit-user-drag:none; touch-action:manipulation; }
+    .skeleton{ position:absolute; inset:0; background:linear-gradient(90deg,#0f0f16,#161622,#0f0f16); background-size:200% 100%; animation:shimmer 1.2s infinite; }
+    @keyframes shimmer{ 0%{background-position:200% 0} 100%{background-position:-200% 0} }
+    .info{ padding:14px 16px 16px; display:grid; gap:10px; }
+    h2{ font-size:clamp(16px,3vw,20px); margin:0; line-height:1.3; word-break:break-word; }
+    .meta{ display:flex; flex-wrap:wrap; gap:10px; align-items:center; color:var(--muted); font-size:14px; }
+    .meta a{ color:var(--ring); text-decoration:none; font-weight:600; }
+    .meta a:hover{ text-decoration:underline; }
+    .controls{ display:flex; gap:10px; align-items:center; justify-content:flex-end; margin-top:6px; flex-wrap:wrap; }
+    button{ appearance:none; border:0; border-radius:12px; padding:12px 16px; background:linear-gradient(180deg,#2a2a3b,#1b1b27); color:#fff; font-weight:700; letter-spacing:.2px; cursor:pointer; transition:transform .05s, box-shadow .2s, filter .2s; box-shadow:0 6px 18px rgba(0,0,0,.3), inset 0 1px 0 rgba(255,255,255,.05); }
+    button:hover{ filter:brightness(1.08); }
+    button:active{ transform:translateY(1px); }
+    button:disabled{ opacity:.6; cursor:not-allowed; }
+    .primary{ background:linear-gradient(180deg,var(--ring),#1c3daa); box-shadow:0 8px 22px rgba(48,107,255,.35), inset 0 1px 0 rgba(255,255,255,.15); }
+    .toast{ position:fixed; left:50%; bottom:18px; transform:translateX(-50%); background:#151523; color:#fff; border:1px solid rgba(255,255,255,.08); padding:10px 14px; border-radius:10px; font-size:14px; box-shadow:var(--shadow); opacity:0; pointer-events:none; transition:opacity .25s; }
+    .toast.show{ opacity:1; }
+    .modal{ position:fixed; inset:0; display:none; background:rgba(5,5,10,.85); backdrop-filter:blur(2px); z-index:1000; }
+    .modal.open{ display:block; }
+    .modal .canvas{ position:absolute; inset:0; overflow:hidden; touch-action:none; display:grid; place-items:center; }
+    .modal img{ max-width:none; width:auto; height:auto; will-change:transform; transform-origin:50% 50%; cursor:grab; user-select:none; -webkit-user-drag:none; }
+    .modal .topbar{ position:absolute; top:10px; left:50%; transform:translateX(-50%); display:flex; gap:8px; align-items:center; padding:6px 10px; border-radius:999px; background:rgba(0,0,0,.45); color:#fff; font-weight:700; border:1px solid rgba(255,255,255,.12); font-size:13px; }
+    .modal .close{ position:absolute; top:10px; right:10px; background:rgba(0,0,0,.55); border:1px solid rgba(255,255,255,.15); border-radius:10px; padding:10px 12px; color:#fff; font-weight:800; cursor:pointer; }
+    @media (max-width:420px){ .meta{font-size:13px} button{padding:11px 14px} }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <header>
+      <div class="title">
+        <div class="logo">SF</div>
+        <h1>Random SFW Anime Meme</h1>
+        <span class="badge">/r/animemes</span>
+      </div>
+      <div class="controls">
+        <button id="copyLinkBtn" title="Copy current meme link">Copy Link</button>
+        <button id="reloadBtn" class="primary" title="Load another meme">Randomize 🔀</button>
+      </div>
+    </header>
+
+    <section class="card" aria-live="polite">
+      <div class="media">
+        <div class="skeleton" id="skeleton"></div>
+        <img id="memeImg" alt="Loading meme..." loading="lazy" />
+      </div>
+
+      <div class="info">
+        <h2 id="memeTitle">Fetching a fresh anime meme…</h2>
+        <div class="meta">
+          <span id="subreddit">subreddit: —</span>
+          <span>•</span>
+          <span id="author">by —</span>
+          <span>•</span>
+          <span id="ups">⬆️ —</span>
+          <span>•</span>
+          <a id="postLink" href="#" target="_blank" rel="noopener">Open Reddit Post</a>
+        </div>
+      </div>
+    </section>
+  </div>
+
+  <div id="toast" class="toast" role="status" aria-live="polite"></div>
+
+  <!-- Zoom Modal -->
+  <div id="zoomModal" class="modal" aria-hidden="true">
+    <div class="topbar">Pinch/scroll to zoom • Drag to move • Esc to close</div>
+    <button class="close" id="closeModal" aria-label="Close">✕</button>
+    <div class="canvas" id="zoomCanvas">
+      <img id="zoomImg" alt="Zoomed meme" />
+    </div>
+  </div>
+
+<script>
+const API = 'https://meme-api.com/gimme/animemes';
+
+const imgEl = document.getElementById('memeImg');
+const titleEl = document.getElementById('memeTitle');
+const postLinkEl = document.getElementById('postLink');
+const subEl = document.getElementById('subreddit');
+const authorEl = document.getElementById('author');
+const upsEl = document.getElementById('ups');
+const reloadBtn = document.getElementById('reloadBtn');
+const copyBtn = document.getElementById('copyLinkBtn');
+const skeleton = document.getElementById('skeleton');
+const toast = document.getElementById('toast');
+
+const zoomModal = document.getElementById('zoomModal');
+const zoomImg = document.getElementById('zoomImg');
+const zoomCanvas = document.getElementById('zoomCanvas');
+const closeModalBtn = document.getElementById('closeModal');
+
+let current = null;
+
+function showToast(msg, ms=2000){
+  toast.textContent = msg;
+  toast.classList.add('show');
+  setTimeout(()=>toast.classList.remove('show'), ms);
+}
+
+async function fetchMeme(){
+  try{
+    reloadBtn.disabled = true;
+    skeleton.style.display = 'block';
+    titleEl.textContent = 'Fetching a fresh anime meme…';
+    imgEl.alt = 'Loading meme...';
+
+    const res = await fetch(API, { cache: 'no-store' });
+    if(!res.ok) throw new Error('API error: ' + res.status);
+    const data = await res.json();
+    if(!data || !data.url) throw new Error('Invalid response');
+
+    current = data;
+
+    imgEl.src = data.url;
+    imgEl.alt = data.title || 'Meme image';
+    titleEl.textContent = data.title || '(untitled)';
+    postLinkEl.href = data.postLink || '#';
+    subEl.textContent = `subreddit: ${data.subreddit || 'animemes'}`;
+    authorEl.textContent = `by u/${data.author || 'unknown'}`;
+    upsEl.textContent = `⬆️ ${Number(data.ups || 0).toLocaleString()}`;
+
+    const url = new URL(location.href);
+    url.searchParams.set('post', (data.postLink || '').replace(/^https?:\/\//,''));
+    history.replaceState(null,'', url.toString());
+
+  }catch(err){
+    console.error(err);
+    showToast('Failed to load meme. Try again.', 2200);
+  }finally{
+    imgEl.onload = () => { skeleton.style.display = 'none'; reloadBtn.disabled = false; };
+    imgEl.onerror = () => {
+      skeleton.style.display = 'none';
+      reloadBtn.disabled = false;
+      titleEl.textContent = 'Failed to load image';
+      showToast('Image failed to load.', 2200);
+    };
+  }
+}
+
+reloadBtn.addEventListener('click', fetchMeme);
+
+copyBtn.addEventListener('click', async () => {
+  if(!current?.postLink){ showToast('No meme loaded yet.'); return; }
+  try{
+    await navigator.clipboard.writeText(current.postLink);
+    showToast('Post link copied!');
+  }catch{ showToast('Couldn’t copy. Long-press the link.'); }
+});
+
+// ---- Zoom modal with pinch/scroll/double-tap ----
+let scale = 1, minScale = 1, maxScale = 6;
+let origin = { x:0, y:0 }, last = { x:0, y:0 };
+let pointers = new Map();
+
+function openZoom(){
+  if(!current) return;
+  zoomImg.src = imgEl.src;
+  zoomImg.alt = imgEl.alt;
+  scale = 1; origin = {x:0,y:0}; last = {x:0,y:0};
+  applyTransform();
+  zoomModal.classList.add('open');
+  zoomModal.setAttribute('aria-hidden','false');
+}
+function closeZoom(){
+  zoomModal.classList.remove('open');
+  zoomModal.setAttribute('aria-hidden','true');
+}
+function applyTransform(){
+  zoomImg.style.transform = `translate(${origin.x}px, ${origin.y}px) scale(${scale})`;
+}
+function clamp(v,min,max){ return Math.max(min, Math.min(max, v)); }
+
+function onWheel(e){
+  e.preventDefault();
+  const rect = zoomImg.getBoundingClientRect();
+  const mx = e.clientX - rect.left, my = e.clientY - rect.top;
+  const delta = -e.deltaY;
+  const factor = Math.exp(delta * 0.0012);
+  const prev = scale;
+  scale = clamp(scale * factor, minScale, maxScale);
+  const dx = (mx - origin.x) / prev, dy = (my - origin.y) / prev;
+  origin.x = mx - dx * scale; origin.y = my - dy * scale;
+  applyTransform();
+}
+function onPointerDown(e){
+  e.preventDefault();
+  zoomCanvas.setPointerCapture(e.pointerId);
+  pointers.set(e.pointerId, {x:e.clientX, y:e.clientY});
+  if(pointers.size === 1){ last = {x:e.clientX, y:e.clientY}; zoomImg.style.cursor='grabbing'; }
+}
+function onPointerMove(e){
+  if(!pointers.has(e.pointerId)) return;
+  pointers.set(e.pointerId, {x:e.clientX, y:e.clientY});
+  if(pointers.size === 1){
+    const dx = e.clientX - last.x, dy = e.clientY - last.y;
+    origin.x += dx; origin.y += dy; last = {x:e.clientX, y:e.clientY}; applyTransform();
+  }else if(pointers.size === 2){
+    const pts = Array.from(pointers.values()); const [p1,p2] = pts;
+    if(!onPointerMove.prev){ onPointerMove.prev = {dist: Math.hypot(p2.x-p1.x,p2.y-p1.y)}; return; }
+    const prevDist = onPointerMove.prev.dist; const dist = Math.hypot(p2.x-p1.x,p2.y-p1.y);
+    const mid = { x:(p1.x+p2.x)/2, y:(p1.y+p2.y)/2 };
+    const rect = zoomImg.getBoundingClientRect();
+    const mx = mid.x - rect.left, my = mid.y - rect.top;
+    const prevScale = scale;
+    scale = clamp(scale * (dist/prevDist), minScale, maxScale);
+    const dx = (mx - origin.x) / prevScale, dy = (my - origin.y) / prevScale;
+    origin.x = mx - dx * scale; origin.y = my - dy * scale;
+    onPointerMove.prev = {dist};
+    applyTransform();
+  }
+}
+function onPointerUp(e){ pointers.delete(e.pointerId); zoomImg.style.cursor='grab'; delete onPointerMove.prev; }
+function onDouble(e){
+  e.preventDefault();
+  const rect = zoomImg.getBoundingClientRect();
+  const mx = (e.clientX ?? rect.width/2) - rect.left;
+  const my = (e.clientY ?? rect.height/2) - rect.top;
+  const prev = scale;
+  scale = scale < 2 ? 3 : 1;
+  const dx = (mx - origin.x)/prev, dy = (my - origin.y)/prev;
+  origin.x = mx - dx * scale; origin.y = my - dy * scale;
+  applyTransform();
+}
+
+imgEl.addEventListener('click', openZoom);
+imgEl.addEventListener('keydown', (e)=>{ if(e.key==='Enter') openZoom(); });
+
+zoomCanvas.addEventListener('wheel', onWheel, {passive:false});
+zoomCanvas.addEventListener('pointerdown', onPointerDown);
+zoomCanvas.addEventListener('pointermove', onPointerMove);
+zoomCanvas.addEventListener('pointerup', onPointerUp);
+zoomCanvas.addEventListener('pointercancel', onPointerUp);
+zoomCanvas.addEventListener('dblclick', onDouble);
+document.addEventListener('keydown', (e)=>{ if(e.key==='Escape') closeZoom(); });
+zoomModal.addEventListener('click', (e)=>{ if(e.target===zoomModal) closeZoom(); });
+closeModalBtn.addEventListener('click', closeZoom);
+
+// Load first meme
+fetchMeme();
+</script>
+</body>
+          </html>
+  
