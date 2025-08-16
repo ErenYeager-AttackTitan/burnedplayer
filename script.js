@@ -1,6 +1,6 @@
 const servers = {
   streamhg: "https://hglink.to/e/zqt5ix0dpggn",
-  abyss: "https://zplayer.io/?v=tFIl3ebsb"
+  abyss: "https://burnedplayer.pages.dev/player?v=tFIl3ebsb"
 };
 
 function loadServer(server) {
