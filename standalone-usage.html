@@ -1,0 +1,63 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>VideoPlayer.js Standalone Example</title>
+    <style>
+        body { font-family: Arial, sans-serif; max-width: 800px; margin: 0 auto; padding: 20px; }
+        .video-container { margin: 20px 0; }
+        code { background: #f5f5f5; padding: 2px 5px; border-radius: 3px; }
+        pre { background: #f5f5f5; padding: 15px; border-radius: 5px; overflow-x: auto; }
+    </style>
+</head>
+<body>
+    <h1>VideoPlayer.js - Standalone Usage</h1>
+    
+    <h2>How to integrate into any website:</h2>
+    
+    <h3>1. Include the script</h3>
+    <pre><code>&lt;script src="https://YOUR_REPLIT_URL/dist/videoplayer.min.js"&gt;&lt;/script&gt;</code></pre>
+    
+    <h3>2. Add HTML container</h3>
+    <pre><code>&lt;div id="my-video-player"&gt;&lt;/div&gt;</code></pre>
+    
+    <h3>3. Initialize with JavaScript</h3>
+    <pre><code>const player = new VideoPlayer('#my-video-player', {
+  autoPlay: false,
+  controls: true,
+  volume: 0.8
+});
+
+player.loadSource([
+  { src: 'video.mp4', type: 'video/mp4' }
+]);</code></pre>
+    
+    <h3>4. Or use data attributes (auto-init)</h3>
+    <pre><code>&lt;div data-video-player='{"autoPlay": false, "controls": true}'&gt;
+  &lt;video&gt;
+    &lt;source src="video.mp4" type="video/mp4"&gt;
+  &lt;/video&gt;
+&lt;/div&gt;</code></pre>
+    
+    <div class="video-container">
+        <h3>Live Example:</h3>
+        <div id="demo-player" style="width: 100%; max-width: 600px;"></div>
+    </div>
+    
+    <script src="../dist/videoplayer.min.js"></script>
+    <script>
+        // Initialize demo player
+        const demoPlayer = new VideoPlayer('#demo-player', {
+            autoPlay: false,
+            controls: true,
+            volume: 0.8
+        });
+        
+        demoPlayer.loadSource([
+            { src: 'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4', type: 'video/mp4' }
+        ]);
+    </script>
+</body>
+</html>

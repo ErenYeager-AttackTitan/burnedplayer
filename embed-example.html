@@ -1,157 +1,40 @@
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>BurnedPlayer - Embed Example</title>
-    <style>
-        body {
-            font-family: Arial, sans-serif;
-            margin: 0;
-            padding: 20px;
-            background: #1a1a1a;
-            color: white;
-        }
-        .container {
-            max-width: 1200px;
-            margin: 0 auto;
-        }
-        h1 {
-            color: #E50914;
-            text-align: center;
-        }
-        .example {
-            margin: 40px 0;
-            padding: 20px;
-            border: 1px solid #333;
-            border-radius: 8px;
-        }
-        .example h2 {
-            color: #fff;
-            border-bottom: 1px solid #333;
-            padding-bottom: 10px;
-        }
-        pre {
-            background: #000;
-            padding: 15px;
-            border-radius: 4px;
-            overflow-x: auto;
-        }
-        code {
-            color: #4CAF50;
-        }
-        .player-container {
-            margin: 20px 0;
-            border-radius: 8px;
-            overflow: hidden;
-        }
-    </style>
+    <title>VideoPlayer.js Embed Example</title>
 </head>
 <body>
-    <div class="container">
-        <h1>BurnedPlayer - Embeddable Video Player</h1>
-        
-        <div class="example">
-            <h2>Method 1: Auto-initialization with data attributes</h2>
-            <p>Simply add the script and use data attributes:</p>
-            <pre><code>&lt;!-- Include BurnedPlayer script --&gt;
-&lt;script src="burned-player.js"&gt;&lt;/script&gt;
-
-&lt;!-- Create player with data attributes --&gt;
-&lt;div data-burned-player 
-     data-src="https://your-stream-url.m3u8"
-     data-autoplay="false"
-     style="width: 800px; max-width: 100%;"&gt;
-&lt;/div&gt;</code></pre>
-            
-            <div class="player-container">
-                <div data-burned-player 
-                     data-src="https://amg02159-kcglobal-amg02159c1-samsung-in-521.playouts.now.amagi.tv/playlist/amg02159-kcglobal-animax-samsungin/playlist.m3u8"
-                     data-autoplay="false"
-                     style="width: 100%; max-width: 800px;">
-                </div>
-            </div>
-        </div>
-        
-        <div class="example">
-            <h2>Method 2: JavaScript initialization</h2>
-            <p>Initialize programmatically for more control:</p>
-            <pre><code>&lt;!-- Include BurnedPlayer script --&gt;
-&lt;script src="burned-player.js"&gt;&lt;/script&gt;
-
-&lt;!-- Create container element --&gt;
-&lt;div id="my-player"&gt;&lt;/div&gt;
-
-&lt;script&gt;
-// Initialize player
-const player = new BurnedPlayer('#my-player', {
-    src: 'https://your-stream-url.m3u8',
-    autoplay: false,
-    controls: true,
-    width: '100%',
-    height: 'auto'
-});
-
-// Use player API
-player.play();
-player.pause();
-player.setVolume(0.5);
-player.seek(30);
-&lt;/script&gt;</code></pre>
-            
-            <div class="player-container">
-                <div id="js-player" style="width: 100%; max-width: 800px;"></div>
-            </div>
-        </div>
-        
-        <div class="example">
-            <h2>Options</h2>
-            <p>Available configuration options:</p>
-            <pre><code>const player = new BurnedPlayer(container, {
-    src: 'https://your-stream.m3u8',    // HLS stream URL
-    autoplay: false,                    // Auto-start playback
-    controls: true,                     // Show player controls
-    width: '100%',                      // Player width
-    height: 'auto'                      // Player height
-});</code></pre>
-        </div>
-        
-        <div class="example">
-            <h2>API Methods</h2>
-            <p>Control the player programmatically:</p>
-            <pre><code>player.play()              // Start playback
-player.pause()             // Pause playback  
-player.setSource(url)      // Change stream URL
-player.setVolume(0.5)      // Set volume (0-1)
-player.seek(30)            // Seek to 30 seconds
-player.destroy()           // Clean up player</code></pre>
-        </div>
-        
-        <div class="example">
-            <h2>Features</h2>
-            <ul>
-                <li>✓ HLS streaming with adaptive bitrate</li>
-                <li>✓ Auto-hiding controls with tap-to-hide</li>
-                <li>✓ Quality selection and auto-quality</li>
-                <li>✓ Subtitle support</li>
-                <li>✓ Fullscreen playback</li>
-                <li>✓ Mobile-friendly touch controls</li>
-                <li>✓ Keyboard shortcuts (Space, F, M, Arrow keys)</li>
-                <li>✓ Netflix-inspired dark theme</li>
-            </ul>
-        </div>
+    <h1>Embed VideoPlayer.js on Any Website</h1>
+    
+    <!-- Option 1: Embed the full demo -->
+    <h2>Full Demo Embed</h2>
+    <iframe 
+        src="YOUR_REPLIT_URL?embed=true&theme=dark" 
+        width="100%" 
+        height="600"
+        frameborder="0">
+    </iframe>
+    
+    <!-- Option 2: Direct video player embed -->
+    <h2>Direct Player Embed</h2>
+    <iframe 
+        src="YOUR_REPLIT_URL/player?video=https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4" 
+        width="800" 
+        height="450"
+        frameborder="0">
+    </iframe>
+    
+    <!-- Instructions -->
+    <div style="margin-top: 20px; padding: 15px; background: #f5f5f5; border-radius: 5px;">
+        <h3>How to use:</h3>
+        <ol>
+            <li>Deploy this Replit project</li>
+            <li>Replace "YOUR_REPLIT_URL" with your deployed URL</li>
+            <li>Copy the iframe code to your website</li>
+        </ol>
     </div>
-    
-    <!-- Include the embeddable BurnedPlayer script -->
-    <script src="embed.js"></script>
-    
-    <script>
-        // Initialize the second player programmatically
-        const jsPlayer = new BurnedPlayer('#js-player', {
-            src: 'https://amg02159-kcglobal-amg02159c1-samsung-in-521.playouts.now.amagi.tv/playlist/amg02159-kcglobal-animax-samsungin/playlist.m3u8',
-            autoplay: false,
-            controls: true
-        });
-    </script>
 </body>
 </html>
