@@ -3,103 +3,94 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Kpop Demon Hunter - Watch Movie</title>
-  <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+  <title>Live Stream</title>
+  <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;700&display=swap" rel="stylesheet">
   <style>
-    body { background: #0f172a; color: #fff; font-family: 'Inter', sans-serif; }
-    .server-btn { transition: all 0.3s ease; }
-    .server-btn:hover { transform: scale(1.05); }
-    .overlay { background: linear-gradient(to right, rgba(15,23,42,0.95), rgba(15,23,42,0.6)); }
-
-    /* ✅ Responsive 16:9 video container */
-    .video-container {
-      position: relative;
-      width: 100%;
-      padding-top: 56.25%;
-      border-radius: 16px;
-      overflow: hidden;
-      background: #000;
+    body {
+      margin: 0;
+      font-family: 'Roboto', sans-serif;
+      background-color: #000;
+      color: #fff;
     }
-    .video-container iframe {
-      position: absolute;
-      top: 0; left: 0;
-      width: 100%; height: 100%;
+    header {
+      width: 100%;
+      padding: 15px 10px;
+      background-color: #1f1f1f;
+      text-align: center;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.5);
+    }
+    header h1 {
+      margin: 0;
+      font-size: 1.5rem;
+    }
+
+    .container {
+      display: flex;
+      justify-content: center;
+      align-items: flex-start;
+      gap: 20px;
+      padding: 20px;
+      flex-wrap: wrap;
+    }
+
+    iframe {
       border: none;
+      border-radius: 8px;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.7);
+    }
+
+    #player {
+      width: 70vw;
+      height: 39.375vw; /* 16:9 ratio */
+      max-width: 960px;
+      max-height: 540px;
+    }
+
+    #chat {
+      width: 25vw;
+      height: 39.375vw;
+      max-width: 320px;
+      max-height: 540px;
+    }
+
+    @media (max-width: 900px) {
+      .container {
+        flex-direction: column;
+        align-items: center;
+      }
+      #player, #chat {
+        width: 90vw;
+        height: 50vw;
+        max-width: 960px;
+        max-height: 540px;
+      }
     }
   </style>
 </head>
 <body>
+  <header>
+    <h1 id="title">Live Stream</h1>
+  </header>
 
-  <!-- 🎬 Hero Section -->
-  <section class="relative h-[90vh] flex items-center">
-    <!-- Background Poster -->
-    <img src="https://files.catbox.moe/x54ki4.jpg" 
-         class="absolute top-0 left-0 w-full h-full object-cover blur-lg scale-110" 
-         alt="Kpop Demon Hunter">
-    <div class="absolute top-0 left-0 w-full h-full overlay"></div>
+  <div class="container">
+    <iframe id="player" allow="autoplay; encrypted-media" allowfullscreen></iframe>
+    <iframe id="chat" allowtransparency="true" sandbox="allow-scripts allow-same-origin"></iframe>
+  </div>
 
-    <!-- Movie Card -->
-    <div class="relative z-10 max-w-5xl mx-auto grid grid-cols-1 md:grid-cols-3 gap-6 px-6">
-      <!-- Poster -->
-      <div class="flex justify-center md:justify-start">
-        <img src="https://files.catbox.moe/x54ki4.jpg" 
-             alt="Poster" 
-             class="rounded-xl shadow-2xl w-64 md:w-72">
-      </div>
+  <script>
+    const urlParams = new URLSearchParams(window.location.search);
+    const embed = urlParams.get('embed');
+    const name = urlParams.get('name');
+    const channelId = new URL(embed).pathname.split('/')[2]; // extract video ID
 
-      <!-- Info -->
-      <div class="md:col-span-2 flex flex-col justify-center">
-        <h1 class="text-4xl md:text-5xl font-bold mb-3">Kpop Demon Hunter</h1>
-        <div class="flex gap-6 text-gray-400 text-sm mb-3">
-          <span>2025</span>
-          <span>⏱️ 2h 12m</span>
-          <span>⭐ 8.7/10</span>
-        </div>
-        <p class="text-gray-300 mb-6">
-          ⚡ A high-energy mix of Kpop glamour and demon-slaying action.  
-          Witness the ultimate battle between light and darkness.
-        </p>
-        <a href="#watch" 
-           class="bg-red-600 hover:bg-red-700 text-white font-semibold px-6 py-3 rounded-lg transition-all w-fit">
-           ▶ Watch Now
-        </a>
-      </div>
-    </div>
-  </section>
+    // Set video iframe
+    document.getElementById('player').src = embed;
 
-  <!-- 🎥 Watch Section -->
-  <section id="watch" class="p-6 max-w-6xl mx-auto">
-    <h2 class="text-2xl font-bold mb-4">Watch Movie</h2>
-    
-    <!-- Video Player -->
-    <div class="video-container">
-      <iframe id="videoFrame" src="" allowfullscreen></iframe>
-    </div>
+    // Set live chat iframe
+    document.getElementById('chat').src = `https://www.youtube.com/live_chat?v=${channelId}&embed_domain=${location.hostname}`;
 
-    <!-- Server Switch -->
-    <div class="flex flex-wrap gap-4 mt-6">
-      <button class="server-btn bg-blue-600 px-4 py-2 rounded-lg" onclick="loadServer('streamhg')">Server 1 - StreamHG</button>
-      <button class="server-btn bg-green-600 px-4 py-2 rounded-lg" onclick="loadServer('abyss')">Server 2 - Abyss</button>
-    </div>
-  </section>
-
-  <!-- ℹ️ Movie Info -->
-  <section class="p-6 max-w-6xl mx-auto">
-    <h2 class="text-xl font-bold mb-3">About the Movie</h2>
-    <p class="text-gray-300 mb-4">
-      <b>Kpop Demon Hunter</b> combines the vibrant world of Kpop with thrilling demon-hunting battles.  
-      Follow the heroes as they balance fame and fear, music and monsters, light and shadows.
-    </p>
-
-    <!-- Tags -->
-    <div class="flex flex-wrap gap-3">
-      <span class="bg-gray-800 px-3 py-1 rounded-full text-sm">Action</span>
-      <span class="bg-gray-800 px-3 py-1 rounded-full text-sm">Fantasy</span>
-      <span class="bg-gray-800 px-3 py-1 rounded-full text-sm">Kpop</span>
-      <span class="bg-gray-800 px-3 py-1 rounded-full text-sm">Supernatural</span>
-    </div>
-  </section>
-
-  <script src="script.js"></script>
+    // Set title
+    document.getElementById('title').textContent = name || 'Live Stream';
+  </script>
 </body>
 </html>
