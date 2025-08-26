@@ -41,14 +41,14 @@
 
     #player {
       width: 70vw;
-      height: 39.375vw; /* 16:9 ratio */
+      height: calc(70vw * 9 / 16); /* maintain 16:9 ratio */
       max-width: 960px;
       max-height: 540px;
     }
 
     #chat {
       width: 25vw;
-      height: 39.375vw;
+      height: calc(70vw * 9 / 16); /* same height as player */
       max-width: 320px;
       max-height: 540px;
     }
@@ -60,9 +60,10 @@
       }
       #player, #chat {
         width: 90vw;
-        height: 50vw;
-        max-width: 960px;
-        max-height: 540px;
+        height: auto;
+      }
+      #chat {
+        min-height: 400px; /* ensure enough vertical space for chat */
       }
     }
   </style>
@@ -81,15 +82,14 @@
     const urlParams = new URLSearchParams(window.location.search);
     const embed = urlParams.get('embed');
     const name = urlParams.get('name');
-    const channelId = new URL(embed).pathname.split('/')[2]; // extract video ID
+    const videoId = new URL(embed).pathname.split('/')[2]; // extract video ID
 
     // Set video iframe
     document.getElementById('player').src = embed;
 
-    // Set live chat iframe
-    document.getElementById('chat').src = `https://www.youtube.com/live_chat?v=${channelId}&embed_domain=${location.hostname}`;
+    // Set live chat iframe (vertical column)
+    document.getElementById('chat').src = `https://www.youtube.com/live_chat?v=${videoId}&embed_domain=${location.hostname}`;
 
-    // Set title
     document.getElementById('title').textContent = name || 'Live Stream';
   </script>
 </body>
