@@ -1,0 +1,108 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Live YouTube Channels</title>
+  <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;700&display=swap" rel="stylesheet">
+  <style>
+    body {
+      margin: 0;
+      font-family: 'Roboto', sans-serif;
+      background-color: #121212;
+      color: #fff;
+    }
+    header {
+      text-align: center;
+      padding: 20px;
+      background: #1f1f1f;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.5);
+    }
+    header h1 {
+      margin: 0;
+      font-size: 1.8rem;
+    }
+    #search {
+      display: block;
+      margin: 15px auto;
+      padding: 10px;
+      width: 90%;
+      max-width: 400px;
+      border-radius: 5px;
+      border: none;
+      font-size: 1rem;
+    }
+    #channels {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+      gap: 15px;
+      padding: 20px;
+    }
+    .channel {
+      background: #1f1f1f;
+      border-radius: 8px;
+      overflow: hidden;
+      cursor: pointer;
+      transition: transform 0.2s;
+      text-align: center;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.5);
+    }
+    .channel:hover {
+      transform: scale(1.05);
+    }
+    .channel img {
+      width: 100%;
+      height: auto;
+      display: block;
+    }
+    .channel p {
+      margin: 10px 0;
+      font-weight: 500;
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <h1>Live YouTube Channels</h1>
+    <input type="text" id="search" placeholder="Search channels..." />
+  </header>
+
+  <div id="channels"></div>
+
+  <script>
+    let channelsData = [];
+
+    async function loadChannels() {
+      const res = await fetch('https://moviecity-api.vercel.app/embed/hardcoded');
+      const data = await res.json();
+      channelsData = data.filter(c => c.live);
+      renderChannels(channelsData);
+    }
+
+    function renderChannels(data) {
+      const container = document.getElementById('channels');
+      container.innerHTML = '';
+      data.forEach(channel => {
+        const div = document.createElement('div');
+        div.className = 'channel';
+        div.innerHTML = `
+          <img src="${channel.thumbnail || 'https://i.ytimg.com/vi/default.jpg'}" alt="${channel.name}" />
+          <p>${channel.name}</p>
+        `;
+        div.onclick = () => {
+          window.location.href = `watch.html?embed=${encodeURIComponent(channel.embed)}&name=${encodeURIComponent(channel.name)}`;
+        };
+        container.appendChild(div);
+      });
+    }
+
+    document.getElementById('search').addEventListener('input', e => {
+      const term = e.target.value.toLowerCase();
+      const filtered = channelsData.filter(c => c.name.toLowerCase().includes(term));
+      renderChannels(filtered);
+    });
+
+    loadChannels();
+  </script>
+</body>
+</html>
