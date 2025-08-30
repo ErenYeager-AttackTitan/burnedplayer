@@ -1,0 +1,73 @@
+<video id="player" playsinline controls style="width:100%;height:100%;max-width:800px;"></video>
+
+<link rel="stylesheet" href="https://cdn.plyr.io/3.7.8/plyr.css" />
+<script src="https://cdn.plyr.io/3.7.8/plyr.polyfilled.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/hls.js@1.5.0/dist/hls.min.js"></script>
+
+<script>
+const m3uUrl = 'https://raw.githubusercontent.com/luongz/iptv-jp/main/jp.m3u';
+const defaultId = 'tokyo_mx_1';
+
+function getQueryId() {
+    const params = new URLSearchParams(window.location.search);
+    return params.get('id') || defaultId;
+}
+
+async function fetchM3U(url) {
+    const res = await fetch(url);
+    const text = await res.text();
+    const lines = text.split('\n').filter(Boolean);
+    const items = [];
+    for (let i = 0; i < lines.length; i++) {
+        if (lines[i].startsWith('#EXTINF')) {
+            const info = lines[i];
+            const streamUrl = lines[i + 1];
+            if (info.includes('group-title="Information"')) continue;
+
+            const tvgIdMatch = info.match(/tvg-id="([^"]+)"/);
+            const tvgId = tvgIdMatch ? tvgIdMatch[1] : null;
+
+            items.push({ url: streamUrl, tvgId });
+            i++;
+        }
+    }
+    return items;
+}
+
+const video = document.getElementById('player');
+const player = new Plyr(video, {
+    controls: ['play', 'fullscreen'], // minimal controls
+    autoplay: true
+});
+
+(async () => {
+    const id = getQueryId();
+    const playlist = await fetchM3U(m3uUrl);
+    const channel = playlist.find(c => c.tvgId === id) || playlist.find(c => c.tvgId === defaultId);
+
+    if (!channel) {
+        console.error('Channel not found!');
+        return;
+    }
+
+    // Use HLS.js
+    if (Hls.isSupported()) {
+        const hls = new Hls({ liveSyncDuration: 3 }); // live stream detection
+        hls.loadSource(channel.url);
+        hls.attachMedia(video);
+        hls.on(Hls.Events.MANIFEST_PARSED, function (_, data) {
+            // If live, hide seek bar
+            if (data.levels[0].details?.live) {
+                document.querySelector('.plyr__progress').style.display = 'none';
+            }
+            video.play();
+        });
+    } else {
+        video.src = channel.url; // Safari native
+    }
+})();
+</script>
+
+<style>
+.plyr__control { background: red !important; border-radius: 3px; }
+</style>
