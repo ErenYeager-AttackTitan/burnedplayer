@@ -4,7 +4,6 @@
   <meta charset="UTF-8">
   <title>ERENxBurnedStream</title>
   <script src="https://cdn.jwplayer.com/libraries/aVr2lJgW.js"></script>
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <style>
     body {
       margin: 0;
@@ -14,59 +13,56 @@
       display: flex;
       flex-direction: column;
       height: 100vh;
-      overflow: hidden;
     }
-    #header {
+    header {
       background: #141421;
-      color: #fff;
-      padding: 12px;
+      padding: 10px;
       display: flex;
       justify-content: space-between;
       align-items: center;
+      border-bottom: 2px solid #2d2d44;
     }
-    #menuBtn {
+    header h1 {
+      font-size: 18px;
+      color: #9b5de5;
+      margin: 0;
+    }
+    #toggleMenu {
       background: #9b5de5;
       border: none;
-      padding: 8px 12px;
-      border-radius: 5px;
       color: #fff;
-      font-size: 16px;
+      padding: 8px 12px;
+      border-radius: 6px;
       cursor: pointer;
     }
-    #drawer {
-      position: fixed;
-      top: 0;
-      left: -260px;
-      width: 250px;
-      height: 100%;
+    #sidebar {
       background: #141421;
       border-right: 2px solid #2d2d44;
-      overflow-y: auto;
-      transition: left 0.3s ease;
-      z-index: 1000;
-      padding: 10px;
-    }
-    #drawer.open {
+      position: absolute;
+      top: 50px;
       left: 0;
+      width: 250px;
+      height: calc(100% - 50px);
+      transform: translateX(-100%);
+      transition: transform 0.3s ease;
+      overflow-y: auto;
+      z-index: 10;
     }
-    #drawer h2 {
-      color: #9b5de5;
-      font-size: 18px;
-      margin: 10px 0;
+    #sidebar.open {
+      transform: translateX(0);
     }
-    #drawer button {
+    #sidebar button {
       width: 100%;
-      padding: 10px;
-      margin-bottom: 6px;
+      padding: 12px;
       background: #1e1e2f;
       color: #eee;
       border: none;
       cursor: pointer;
-      border-radius: 6px;
+      border-radius: 0;
       text-align: left;
       transition: background 0.2s;
     }
-    #drawer button:hover {
+    #sidebar button:hover {
       background: #9b5de5;
       color: #fff;
     }
@@ -74,13 +70,14 @@
       flex: 1;
       display: flex;
       flex-direction: column;
+      margin-top: 50px;
     }
     #player {
       flex: 2;
       background: #000;
     }
     #chat {
-      flex: 1.5;
+      flex: 3;
       border-top: 2px solid #2d2d44;
     }
     iframe {
@@ -88,24 +85,29 @@
       height: 100%;
       border: none;
     }
-    /* Mobile optimizations */
     @media (max-width: 768px) {
-      #player { flex: 1.5; }
-      #chat { flex: 1; }
-      #drawer { width: 200px; }
-      #menuBtn { font-size: 14px; padding: 6px 10px; }
+      #sidebar {
+        width: 200px;
+      }
+      #player {
+        flex: none;
+        height: 40vh;
+      }
+      #chat {
+        flex: none;
+        height: 60vh;
+      }
     }
   </style>
 </head>
 <body>
 
-<div id="header">
-  <h1 style="margin:0;font-size:18px;">📺 ERENxBurnedStream</h1>
-  <button id="menuBtn">☰ Channels</button>
-</div>
+<header>
+  <h1>📺 ERENxBurnedStream</h1>
+  <button id="toggleMenu">☰ Channels</button>
+</header>
 
-<div id="drawer">
-  <h2>Channel List</h2>
+<div id="sidebar">
   <div id="channelList">Loading...</div>
 </div>
 
@@ -116,17 +118,9 @@
 
 <script>
   const PLAYLIST_URL = "https://raw.githubusercontent.com/MovieCity/iptv-jp/refs/heads/main/jp.m3u";
-  const CBOX_BASE = "https://my.cbox.ws/ERENxBurnedStream";
 
   let channels = [];
 
-  // Toggle drawer
-  const drawer = document.getElementById("drawer");
-  document.getElementById("menuBtn").onclick = () => {
-    drawer.classList.toggle("open");
-  };
-
-  // Load M3U playlist
   fetch(PLAYLIST_URL)
     .then(res => res.text())
     .then(text => {
@@ -141,10 +135,9 @@
         }
       }
       renderChannelList();
-      if (channels.length > 0) loadChannel(channels[0]); // autoplay first
+      if (channels.length > 0) loadChannel(channels[0]);
     });
 
-  // Render channel buttons
   function renderChannelList() {
     const list = document.getElementById("channelList");
     list.innerHTML = "";
@@ -153,13 +146,12 @@
       btn.textContent = ch.title;
       btn.onclick = () => {
         loadChannel(ch);
-        drawer.classList.remove("open"); // auto-close on selection
+        toggleSidebar(false);
       };
       list.appendChild(btn);
     });
   }
 
-  // Load channel into JWPlayer + Cbox
   function loadChannel(ch) {
     jwplayer("player").setup({
       file: ch.url,
@@ -167,13 +159,23 @@
       width: "100%",
       aspectratio: "16:9",
       autostart: true,
-      skin: { name: "seven" }
+      skin: { name: "seven" },
     });
 
-    const safeName = encodeURIComponent(ch.title.replace(/\s+/g, "_"));
+    // Use channel name as chat "boxid"
+    const safeBoxId = encodeURIComponent(ch.title.replace(/\s+/g, "_"));
+    const chatUrl = `https://www6.cbox.ws/box/?boxid=${safeBoxId}&boxtag=${safeBoxId}`;
     document.getElementById("chat").innerHTML =
-      `<iframe src="${CBOX_BASE}?boxid=${safeName}" allowtransparency="yes" scrolling="auto"></iframe>`;
+      `<iframe src="${chatUrl}" allowtransparency="yes" scrolling="auto"></iframe>`;
   }
+
+  function toggleSidebar(force) {
+    const sidebar = document.getElementById("sidebar");
+    if (force === false) sidebar.classList.remove("open");
+    else sidebar.classList.toggle("open");
+  }
+
+  document.getElementById("toggleMenu").onclick = () => toggleSidebar();
 </script>
 
 </body>
