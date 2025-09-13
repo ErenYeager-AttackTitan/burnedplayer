@@ -6,33 +6,188 @@
   <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
   <script src="https://cdn.tailwindcss.com"></script>
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+  <style>
+    .sidebar { min-height: 100vh; }
+    .card-custom { transition: transform 0.2s ease; }
+    .card-custom:hover { transform: scale(1.03); }
+  </style>
 </head>
 <body class="bg-gray-900 text-white">
-  <div class="container py-5">
-    <h1 class="text-3xl font-bold mb-4">📊 Admin Dashboard</h1>
-
-    <!-- TMDB Search -->
-    <div class="mb-5">
-      <input id="tmdbQuery" type="text" class="form-control" placeholder="Search TMDB...">
-      <button class="btn btn-primary mt-2" onclick="searchTMDB()">Search</button>
+  <div class="flex">
+    <!-- Sidebar -->
+    <div class="sidebar bg-black w-64 p-4 hidden md:block">
+      <h2 class="text-2xl font-bold text-red-500 mb-6">🔥 BurnedStream</h2>
+      <ul class="space-y-3">
+        <li><button class="w-full btn btn-outline-light" onclick="switchTab('movies')">🎬 Movies</button></li>
+        <li><button class="w-full btn btn-outline-light" onclick="switchTab('series')">📺 Series</button></li>
+        <li><button class="w-full btn btn-outline-light" onclick="switchTab('tmdb')">🔍 TMDB Search</button></li>
+      </ul>
     </div>
 
-    <!-- TMDB Results -->
-    <div id="results" class="grid grid-cols-1 md:grid-cols-3 gap-4"></div>
+    <!-- Main Content -->
+    <div class="flex-1 p-4">
+      <h1 class="text-3xl font-bold mb-4">📊 Admin Dashboard</h1>
 
-    <!-- Add Slug -->
-    <div id="slugForm" class="mt-5 hidden">
-      <h3 class="text-xl font-bold">Add Slug</h3>
-      <input id="slug" class="form-control mb-2" placeholder="Abyss.to slug">
-      <button class="btn btn-success" onclick="saveContent()">Save to Database</button>
+      <!-- TMDB Search -->
+      <div id="tmdbTab" class="hidden">
+        <input id="tmdbQuery" type="text" class="form-control bg-dark text-white border-0 mb-2" placeholder="Search TMDB...">
+        <button class="btn btn-danger mb-4" onclick="searchTMDB()">Search</button>
+        <div id="results" class="grid grid-cols-1 md:grid-cols-3 gap-4"></div>
+      </div>
+
+      <!-- Movies -->
+      <div id="moviesTab" class="hidden">
+        <h2 class="text-xl font-bold mb-3">🎬 Movies</h2>
+        <button class="btn btn-success mb-3" onclick="showForm('movie')">➕ Add Movie</button>
+        <div id="moviesList" class="grid grid-cols-1 md:grid-cols-3 gap-4"></div>
+      </div>
+
+      <!-- Series -->
+      <div id="seriesTab" class="hidden">
+        <h2 class="text-xl font-bold mb-3">📺 Series</h2>
+        <button class="btn btn-success mb-3" onclick="showForm('series')">➕ Add Series</button>
+        <div id="seriesList" class="grid grid-cols-1 md:grid-cols-3 gap-4"></div>
+      </div>
+
+      <!-- Add/Edit Form -->
+      <div id="formModal" class="hidden bg-black p-4 rounded shadow-lg mt-6">
+        <h3 id="formTitle" class="text-xl font-bold mb-3"></h3>
+        <input id="title" class="form-control mb-2" placeholder="Title">
+        <input id="poster" class="form-control mb-2" placeholder="Poster URL">
+        <textarea id="description" class="form-control mb-2" placeholder="Description"></textarea>
+        <input id="rating" type="number" class="form-control mb-2" placeholder="Rating">
+        <input id="year" class="form-control mb-2" placeholder="Year">
+        <input id="slug" class="form-control mb-2" placeholder="Abyss slug">
+        <button class="btn btn-primary" onclick="saveContent()">💾 Save</button>
+        <button class="btn btn-secondary" onclick="closeForm()">❌ Cancel</button>
+      </div>
     </div>
   </div>
 
   <script>
     const API = "https://crew-auth.vercel.app/api";
-    const TMDB_KEY = "fbf4539d38342f0aba856021880b9df8"; // replace with your TMDB key
-    let selectedItem = null;
+    const TMDB_KEY = "fbf4539d38342f0aba856021880b9df8";
+    let currentTab = "";
+    let editingId = null;
+    let editingType = "";
 
+    // Tab Switching
+    function switchTab(tab) {
+      currentTab = tab;
+      document.getElementById("tmdbTab").classList.add("hidden");
+      document.getElementById("moviesTab").classList.add("hidden");
+      document.getElementById("seriesTab").classList.add("hidden");
+      if (tab === "movies") loadMovies();
+      if (tab === "series") loadSeries();
+      document.getElementById(tab + "Tab").classList.remove("hidden");
+    }
+
+    // Load Movies
+    async function loadMovies() {
+      let res = await axios.get(`${API}/content`);
+      let container = document.getElementById("moviesList");
+      container.innerHTML = "";
+      res.data.forEach(m => {
+        container.innerHTML += `
+          <div class="card bg-dark text-white card-custom">
+            <img src="${m.poster}" class="card-img-top h-60 object-cover">
+            <div class="card-body">
+              <h5 class="card-title">${m.title}</h5>
+              <p class="text-sm">${m.year} ⭐ ${m.rating}</p>
+              <button class="btn btn-warning btn-sm" onclick="editItem('${m._id}','movie')">✏ Edit</button>
+              <button class="btn btn-danger btn-sm" onclick="deleteItem('${m._id}','movie')">🗑 Delete</button>
+            </div>
+          </div>
+        `;
+      });
+    }
+
+    // Load Series
+    async function loadSeries() {
+      let res = await axios.get(`${API}/series`);
+      let container = document.getElementById("seriesList");
+      container.innerHTML = "";
+      res.data.forEach(s => {
+        container.innerHTML += `
+          <div class="card bg-dark text-white card-custom">
+            <img src="${s.poster}" class="card-img-top h-60 object-cover">
+            <div class="card-body">
+              <h5 class="card-title">${s.title}</h5>
+              <p class="text-sm">${s.year} ⭐ ${s.rating}</p>
+              <button class="btn btn-warning btn-sm" onclick="editItem('${s._id}','series')">✏ Edit</button>
+              <button class="btn btn-danger btn-sm" onclick="deleteItem('${s._id}','series')">🗑 Delete</button>
+            </div>
+          </div>
+        `;
+      });
+    }
+
+    // Show Form
+    function showForm(type) {
+      editingId = null;
+      editingType = type;
+      document.getElementById("formTitle").innerText = `Add ${type === 'movie' ? 'Movie' : 'Series'}`;
+      document.getElementById("formModal").classList.remove("hidden");
+    }
+
+    // Close Form
+    function closeForm() {
+      document.getElementById("formModal").classList.add("hidden");
+    }
+
+    // Edit Item
+    async function editItem(id, type) {
+      editingId = id;
+      editingType = type;
+      let endpoint = type === "movie" ? "content" : "series";
+      let res = await axios.get(`${API}/${endpoint}`);
+      let item = res.data.find(x => x._id === id);
+      if (item) {
+        document.getElementById("title").value = item.title;
+        document.getElementById("poster").value = item.poster;
+        document.getElementById("description").value = item.description;
+        document.getElementById("rating").value = item.rating;
+        document.getElementById("year").value = item.year;
+        document.getElementById("slug").value = item.slug;
+        document.getElementById("formTitle").innerText = `Edit ${type === 'movie' ? 'Movie' : 'Series'}`;
+        document.getElementById("formModal").classList.remove("hidden");
+      }
+    }
+
+    // Save Item
+    async function saveContent() {
+      let data = {
+        title: document.getElementById("title").value,
+        poster: document.getElementById("poster").value,
+        description: document.getElementById("description").value,
+        rating: document.getElementById("rating").value,
+        year: document.getElementById("year").value,
+        slug: document.getElementById("slug").value,
+        type: editingType === "series" ? "tv" : "movie"
+      };
+      let endpoint = editingType === "movie" ? "content" : "series";
+
+      if (editingId) {
+        await axios.put(`${API}/${endpoint}/${editingId}`, data);
+        alert("✅ Updated successfully!");
+      } else {
+        await axios.post(`${API}/${endpoint}`, data);
+        alert("✅ Added successfully!");
+      }
+      closeForm();
+      switchTab(editingType === "movie" ? "movies" : "series");
+    }
+
+    // Delete Item
+    async function deleteItem(id, type) {
+      if (!confirm("Are you sure?")) return;
+      let endpoint = type === "movie" ? "content" : "series";
+      await axios.delete(`${API}/${endpoint}/${id}`);
+      alert("🗑 Deleted!");
+      switchTab(type === "movie" ? "movies" : "series");
+    }
+
+    // TMDB Search
     async function searchTMDB() {
       let q = document.getElementById("tmdbQuery").value;
       if (!q) return;
@@ -40,49 +195,35 @@
       let items = res.data.results;
       let container = document.getElementById("results");
       container.innerHTML = "";
-
       items.forEach(item => {
         let poster = item.poster_path ? `https://image.tmdb.org/t/p/w500${item.poster_path}` : "";
-        let card = `
-          <div class="card bg-dark text-white">
-            <img src="${poster}" class="card-img-top">
+        container.innerHTML += `
+          <div class="card bg-dark text-white card-custom">
+            <img src="${poster}" class="card-img-top h-60 object-cover">
             <div class="card-body">
               <h5>${item.title || item.name}</h5>
-              <p class="text-sm">${item.overview?.substring(0, 80) || ""}...</p>
-              <button class="btn btn-warning btn-sm" onclick='selectItem(${JSON.stringify(item)})'>Select</button>
+              <p class="text-sm">${item.overview?.substring(0, 100) || ""}...</p>
+              <button class="btn btn-success btn-sm" onclick='prefillForm(${JSON.stringify(item)})'>Use</button>
             </div>
           </div>
         `;
-        container.innerHTML += card;
       });
     }
 
-    function selectItem(item) {
-      selectedItem = item;
-      document.getElementById("slugForm").classList.remove("hidden");
+    // Prefill Form from TMDB
+    function prefillForm(item) {
+      document.getElementById("title").value = item.title || item.name;
+      document.getElementById("poster").value = item.poster_path ? `https://image.tmdb.org/t/p/w500${item.poster_path}` : "";
+      document.getElementById("description").value = item.overview || "";
+      document.getElementById("rating").value = item.vote_average || "";
+      document.getElementById("year").value = (item.release_date || item.first_air_date || "").split("-")[0] || "";
+      editingType = item.media_type === "tv" ? "series" : "movie";
+      document.getElementById("formTitle").innerText = `Add ${editingType === "movie" ? "Movie" : "Series"}`;
+      document.getElementById("formModal").classList.remove("hidden");
     }
 
-    async function saveContent() {
-      if (!selectedItem) return;
-      let slug = document.getElementById("slug").value;
-      if (!slug) return alert("Enter a slug!");
-
-      let data = {
-        title: selectedItem.title || selectedItem.name,
-        poster: selectedItem.poster_path ? `https://image.tmdb.org/t/p/w500${selectedItem.poster_path}` : "",
-        description: selectedItem.overview,
-        rating: selectedItem.vote_average,
-        type: selectedItem.media_type === "tv" ? "tv" : "movie",
-        slug,
-        year: (selectedItem.release_date || selectedItem.first_air_date || "").split("-")[0],
-        genres: []
-      };
-
-      let endpoint = data.type === "tv" ? "series" : "content";
-      await axios.post(`${API}/${endpoint}`, data);
-      alert("✅ Saved successfully!");
-      location.reload();
-    }
+    // Default to Movies tab
+    switchTab("movies");
   </script>
 </body>
 </html>
