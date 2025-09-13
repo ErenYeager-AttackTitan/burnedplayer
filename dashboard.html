@@ -1,0 +1,88 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Dashboard - BurnedStream</title>
+  <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+</head>
+<body class="bg-gray-900 text-white">
+  <div class="container py-5">
+    <h1 class="text-3xl font-bold mb-4">📊 Admin Dashboard</h1>
+
+    <!-- TMDB Search -->
+    <div class="mb-5">
+      <input id="tmdbQuery" type="text" class="form-control" placeholder="Search TMDB...">
+      <button class="btn btn-primary mt-2" onclick="searchTMDB()">Search</button>
+    </div>
+
+    <!-- TMDB Results -->
+    <div id="results" class="grid grid-cols-1 md:grid-cols-3 gap-4"></div>
+
+    <!-- Add Slug -->
+    <div id="slugForm" class="mt-5 hidden">
+      <h3 class="text-xl font-bold">Add Slug</h3>
+      <input id="slug" class="form-control mb-2" placeholder="Abyss.to slug">
+      <button class="btn btn-success" onclick="saveContent()">Save to Database</button>
+    </div>
+  </div>
+
+  <script>
+    const API = "https://crew-auth.vercel.app/api";
+    const TMDB_KEY = "YOUR_TMDB_KEY"; // replace with your TMDB key
+    let selectedItem = null;
+
+    async function searchTMDB() {
+      let q = document.getElementById("tmdbQuery").value;
+      if (!q) return;
+      let res = await axios.get(`https://api.themoviedb.org/3/search/multi?api_key=${TMDB_KEY}&query=${q}`);
+      let items = res.data.results;
+      let container = document.getElementById("results");
+      container.innerHTML = "";
+
+      items.forEach(item => {
+        let poster = item.poster_path ? `https://image.tmdb.org/t/p/w500${item.poster_path}` : "";
+        let card = `
+          <div class="card bg-dark text-white">
+            <img src="${poster}" class="card-img-top">
+            <div class="card-body">
+              <h5>${item.title || item.name}</h5>
+              <p class="text-sm">${item.overview?.substring(0, 80) || ""}...</p>
+              <button class="btn btn-warning btn-sm" onclick='selectItem(${JSON.stringify(item)})'>Select</button>
+            </div>
+          </div>
+        `;
+        container.innerHTML += card;
+      });
+    }
+
+    function selectItem(item) {
+      selectedItem = item;
+      document.getElementById("slugForm").classList.remove("hidden");
+    }
+
+    async function saveContent() {
+      if (!selectedItem) return;
+      let slug = document.getElementById("slug").value;
+      if (!slug) return alert("Enter a slug!");
+
+      let data = {
+        title: selectedItem.title || selectedItem.name,
+        poster: selectedItem.poster_path ? `https://image.tmdb.org/t/p/w500${selectedItem.poster_path}` : "",
+        description: selectedItem.overview,
+        rating: selectedItem.vote_average,
+        type: selectedItem.media_type === "tv" ? "tv" : "movie",
+        slug,
+        year: (selectedItem.release_date || selectedItem.first_air_date || "").split("-")[0],
+        genres: []
+      };
+
+      let endpoint = data.type === "tv" ? "series" : "content";
+      await axios.post(`${API}/${endpoint}`, data);
+      alert("✅ Saved successfully!");
+      location.reload();
+    }
+  </script>
+</body>
+</html>
