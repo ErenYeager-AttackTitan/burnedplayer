@@ -1,0 +1,115 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Admin Dashboard</title>
+<style>
+  body { font-family: Arial; max-width: 1000px; margin:auto; padding:20px; }
+  input, button, select { margin:5px; padding:5px; }
+  img { width: 80px; }
+  table { width: 100%; border-collapse: collapse; margin-top: 20px; }
+  th, td { border: 1px solid #ddd; padding: 8px; text-align:left; }
+  .tmdb-item { display:flex; align-items:center; margin-bottom:10px; }
+  .tmdb-item img { margin-right:10px; }
+</style>
+</head>
+<body>
+
+<h1>Admin Dashboard</h1>
+
+<h2>TMDB Search</h2>
+<input type="text" id="searchQuery" placeholder="Movie or Series Name">
+<select id="searchType">
+  <option value="movie">Movie</option>
+  <option value="tv">Series</option>
+</select>
+<button onclick="searchTMDB()">Search</button>
+
+<div id="tmdbResults"></div>
+
+<h2>Database Stats</h2>
+<button onclick="getStats()">Refresh Stats</button>
+<div id="stats"></div>
+
+<h2>Database Content</h2>
+<button onclick="loadContent()">Load Movies & Series</button>
+<div id="dbContent"></div>
+
+<script>
+const API = "http://localhost:5000";
+
+async function searchTMDB() {
+  const query = document.getElementById("searchQuery").value;
+  const type = document.getElementById("searchType").value;
+  const res = await fetch(`${API}/api/tmdb/search?query=${query}&type=${type}`);
+  const data = await res.json();
+  const container = document.getElementById("tmdbResults");
+  container.innerHTML = data.map(item => {
+    const posterLow = "https://image.tmdb.org/t/p/w200" + (item.poster_path || "");
+    const posterHigh = "https://image.tmdb.org/t/p/original" + (item.poster_path || "");
+    const backdropLow = "https://image.tmdb.org/t/p/w300" + (item.backdrop_path || "");
+    const backdropHigh = "https://image.tmdb.org/t/p/original" + (item.backdrop_path || "");
+    return `
+      <div class="tmdb-item">
+        <img src="${posterLow}" alt="">
+        <div>
+          <b>${item.title || item.name}</b> (${item.release_date || item.first_air_date})
+          <div>
+            <button onclick='addToDB(${JSON.stringify(item)}, "${type}")'>Add</button>
+          </div>
+        </div>
+      </div>
+    `;
+  }).join("");
+}
+
+async function addToDB(item, type) {
+  const payload = {
+    title: item.title || item.name,
+    posterLow: "https://image.tmdb.org/t/p/w200" + (item.poster_path || ""),
+    posterHigh: "https://image.tmdb.org/t/p/original" + (item.poster_path || ""),
+    backdropLow: "https://image.tmdb.org/t/p/w300" + (item.backdrop_path || ""),
+    backdropHigh: "https://image.tmdb.org/t/p/original" + (item.backdrop_path || ""),
+    description: item.overview,
+    rating: item.vote_average,
+    slug: (item.id).toString(),
+    year: parseInt((item.release_date || item.first_air_date || "0").split("-")[0]),
+    genres: []
+  };
+  const url = type === "movie" ? "/api/content" : "/api/series";
+  await fetch(API + url, { method:"POST", headers:{"Content-Type":"application/json"}, body: JSON.stringify(payload) });
+  alert("Added to DB!");
+}
+
+async function getStats() {
+  const res = await fetch(API + "/api/stats");
+  const data = await res.json();
+  document.getElementById("stats").innerText = `Movies: ${data.movies}, Series: ${data.series}, Episodes: ${data.episodes}`;
+}
+
+async function loadContent() {
+  const moviesRes = await fetch(API + "/api/content");
+  const seriesRes = await fetch(API + "/api/series");
+  const movies = await moviesRes.json();
+  const series = await seriesRes.json();
+
+  const container = document.getElementById("dbContent");
+  container.innerHTML = "<h3>Movies</h3>" + movies.map(m => `
+    <div>
+      <img src="${m.posterLow}" alt=""> ${m.title} <button onclick='editMovie("${m._id}")'>Edit</button>
+    </div>
+  `).join("");
+
+  container.innerHTML += "<h3>Series</h3>" + series.map(s => `
+    <div>
+      <img src="${s.posterLow}" alt=""> ${s.title} <button onclick='editSeries("${s._id}")'>Edit</button>
+    </div>
+  `).join("");
+}
+
+function editMovie(id){ alert("Edit movie ID: "+id) }
+function editSeries(id){ alert("Edit series ID: "+id) }
+
+</script>
+</body>
+</html>
