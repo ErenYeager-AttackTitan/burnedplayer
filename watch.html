@@ -7,41 +7,77 @@
   <script src="https://cdn.tailwindcss.com"></script>
 </head>
 <body class="bg-gray-900 text-white">
-  <div class="container-fluid p-0">
-    <div class="relative h-[70vh] w-full bg-black">
-      <iframe id="player" class="w-full h-full" allowfullscreen></iframe>
-    </div>
-    <div class="p-4">
-      <h1 id="title" class="text-3xl font-bold"></h1>
-      <p id="desc" class="text-sm text-gray-300 my-2"></p>
+  <!-- Poster Banner -->
+  <div class="relative h-[40vh] md:h-[60vh]">
+    <img id="poster" class="absolute inset-0 w-full h-full object-cover opacity-40">
+    <div class="relative p-6">
+      <h1 id="title" class="text-3xl md:text-5xl font-bold drop-shadow-lg"></h1>
+      <p id="desc" class="max-w-xl text-sm md:text-lg my-2"></p>
       <p class="text-warning">⭐ <span id="rating"></span></p>
     </div>
+  </div>
+
+  <!-- Player -->
+  <div class="w-full h-[60vh] bg-black">
+    <iframe id="player" class="w-full h-full" allowfullscreen></iframe>
+  </div>
+
+  <!-- Episodes (for series) -->
+  <div id="episodes" class="p-4 hidden">
+    <h2 class="text-xl font-bold mb-3">Episodes</h2>
+    <div id="epList" class="grid grid-cols-2 md:grid-cols-4 gap-3"></div>
   </div>
 
   <script>
     const API = "https://crew-auth.vercel.app/api";
     const params = new URLSearchParams(window.location.search);
-    const slug = params.get("slug");
+    const id = params.get("id");
+    const type = params.get("type");
 
     async function loadVideo() {
-      if (!slug) {
-        document.body.innerHTML = "<h1 class='text-center mt-20'>❌ No video slug</h1>";
+      if (!id || !type) {
+        document.body.innerHTML = "<h1 class='text-center mt-20'>❌ Invalid request</h1>";
         return;
       }
-      document.getElementById("player").src = `https://burnedplayer.pages.dev/player?v=${slug}`;
 
-      // fetch details
-      let [movies, series] = await Promise.all([
-        axios.get(`${API}/content`),
-        axios.get(`${API}/series`)
-      ]);
-      let all = [...movies.data, ...series.data];
-      let item = all.find(i => i.slug === slug);
-      if (item) {
-        document.getElementById("title").innerText = item.title;
-        document.getElementById("desc").innerText = item.description;
-        document.getElementById("rating").innerText = item.rating || "N/A";
+      let endpoint = type === "tv" ? "series" : "content";
+      let res = await axios.get(`${API}/${endpoint}`);
+      let item = res.data.find(x => x._id === id);
+
+      if (!item) {
+        document.body.innerHTML = "<h1 class='text-center mt-20'>❌ Not found</h1>";
+        return;
       }
+
+      // Fill header
+      document.getElementById("poster").src = item.poster;
+      document.getElementById("title").innerText = item.title;
+      document.getElementById("desc").innerText = item.description;
+      document.getElementById("rating").innerText = item.rating || "N/A";
+
+      // If movie → load directly
+      if (type === "movie") {
+        document.getElementById("player").src = `https://burnedplayer.pages.dev/player?v=${item.slug}`;
+      }
+
+      // If series → load first episode + list
+      if (type === "tv") {
+        document.getElementById("episodes").classList.remove("hidden");
+        let epList = document.getElementById("epList");
+        epList.innerHTML = "";
+        item.episodes.forEach(ep => {
+          epList.innerHTML += `
+            <button class="btn btn-outline-light w-full" onclick="playEpisode('${ep.slug}')">${ep.ep}</button>
+          `;
+        });
+        if (item.episodes.length) {
+          playEpisode(item.episodes[0].slug);
+        }
+      }
+    }
+
+    function playEpisode(slug) {
+      document.getElementById("player").src = `https://burnedplayer.pages.dev/player?v=${slug}`;
     }
 
     loadVideo();
