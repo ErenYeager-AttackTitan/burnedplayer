@@ -7,41 +7,44 @@
   <script src="https://cdn.tailwindcss.com"></script>
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
   <style>
-    .row-scroll { display: flex; overflow-x: auto; gap: 1rem; scroll-behavior: smooth; }
+    .row-scroll { display: flex; overflow-x: auto; gap: 0.75rem; scroll-behavior: smooth; padding-bottom: 0.5rem; }
     .row-scroll::-webkit-scrollbar { display: none; }
-    .card-custom { min-width: 160px; flex-shrink: 0; transition: transform 0.3s ease; }
-    .card-custom:hover { transform: scale(1.08); z-index: 10; }
+    .card-custom { min-width: 120px; flex-shrink: 0; border-radius: 0.5rem; overflow: hidden; }
+    .poster-img { height: 180px; object-fit: cover; border-radius: 0.5rem; }
+    @media(min-width:768px){
+      .card-custom { min-width: 160px; }
+      .poster-img { height: 240px; }
+    }
   </style>
 </head>
 <body class="bg-gray-900 text-white">
   <!-- Navbar -->
-  <nav class="navbar navbar-dark bg-black px-4 fixed w-full z-50">
-    <a class="navbar-brand text-xl font-bold text-red-600" href="index.html">🔥 BurnedStream</a>
+  <nav class="navbar navbar-dark bg-black px-3 fixed w-full z-50">
+    <a class="navbar-brand text-lg font-bold text-red-600" href="index.html">🔥 BurnedStream</a>
     <form class="d-flex">
-      <input id="search" class="form-control me-2 bg-dark text-white border-0" type="search" placeholder="Search...">
-      <button class="btn btn-danger" type="button" onclick="searchContent()">Search</button>
+      <input id="search" class="form-control me-2 bg-dark text-white border-0 text-sm" type="search" placeholder="Search...">
+      <button class="btn btn-danger btn-sm" type="button" onclick="searchContent()">🔍</button>
     </form>
   </nav>
 
   <!-- Hero -->
-  <section id="hero" class="relative h-[60vh] md:h-[80vh] flex items-center justify-center bg-black mt-[56px]">
+  <section id="hero" class="relative h-[35vh] md:h-[60vh] flex items-end bg-black mt-[56px]">
     <img id="heroPoster" class="absolute inset-0 w-full h-full object-cover opacity-40">
-    <div class="relative text-center px-4">
-      <h1 id="heroTitle" class="text-3xl md:text-6xl font-bold mb-4 drop-shadow-lg"></h1>
-      <p id="heroDesc" class="max-w-xl mx-auto text-sm md:text-lg mb-4"></p>
-      <a id="heroBtn" href="#" class="btn btn-danger px-4">▶ Watch</a>
+    <div class="relative p-3">
+      <h1 id="heroTitle" class="text-lg md:text-4xl font-bold mb-1"></h1>
+      <a id="heroBtn" href="#" class="btn btn-danger btn-sm px-3 py-1">▶ Watch</a>
     </div>
   </section>
 
   <!-- Sections -->
-  <div class="container-fluid px-4 py-6">
-    <h2 class="text-2xl font-bold mb-2">Movies</h2>
-    <div id="moviesRow" class="row-scroll mb-6"></div>
+  <div class="container-fluid px-3 py-4">
+    <h2 class="text-base md:text-xl font-bold mb-2">Movies</h2>
+    <div id="moviesRow" class="row-scroll mb-4"></div>
 
-    <h2 class="text-2xl font-bold mb-2">TV Series</h2>
-    <div id="seriesRow" class="row-scroll mb-6"></div>
+    <h2 class="text-base md:text-xl font-bold mb-2">TV Series</h2>
+    <div id="seriesRow" class="row-scroll mb-4"></div>
 
-    <h2 class="text-2xl font-bold mb-2">All Titles</h2>
+    <h2 class="text-base md:text-xl font-bold mb-2">All Titles</h2>
     <div id="allRow" class="row-scroll"></div>
   </div>
 
@@ -63,9 +66,11 @@
     }
 
     function setHero(item) {
-      document.getElementById("heroPoster").src = item.poster;
+      let poster = item.poster.includes("image.tmdb.org") 
+        ? item.poster.replace("/w500","/w342") 
+        : item.poster;
+      document.getElementById("heroPoster").src = poster;
       document.getElementById("heroTitle").innerText = item.title;
-      document.getElementById("heroDesc").innerText = item.description?.substring(0, 120) || "";
       document.getElementById("heroBtn").href = `watch.html?type=${item.type}&id=${item._id}`;
     }
 
@@ -73,14 +78,13 @@
       let row = document.getElementById(rowId);
       row.innerHTML = "";
       items.forEach(item => {
+        let poster = item.poster.includes("image.tmdb.org") 
+          ? item.poster.replace("/w500","/w185") 
+          : item.poster;
         let card = `
-          <div class="card bg-dark text-white card-custom shadow-lg">
-            <img src="${item.poster}" class="card-img-top h-64 object-cover" alt="${item.title}">
-            <div class="card-body p-2">
-              <h6 class="card-title text-truncate">${item.title}</h6>
-              <p class="text-warning text-xs">⭐ ${item.rating || "N/A"}</p>
-              <a href="watch.html?type=${item.type}&id=${item._id}" class="btn btn-danger btn-sm w-full">Watch</a>
-            </div>
+          <div class="card-custom">
+            <img src="${poster}" class="poster-img w-full" alt="${item.title}">
+            <a href="watch.html?type=${item.type}&id=${item._id}" class="block text-xs text-center mt-1">${item.title}</a>
           </div>
         `;
         row.innerHTML += card;
