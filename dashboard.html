@@ -13,9 +13,9 @@
   </style>
 </head>
 <body class="bg-gray-900 text-white">
-  <div class="flex">
+  <div class="flex flex-col md:flex-row">
     <!-- Sidebar -->
-    <div class="sidebar bg-black w-64 p-4 hidden md:block">
+    <div class="sidebar bg-black w-full md:w-64 p-4">
       <h2 class="text-2xl font-bold text-red-500 mb-6">🔥 BurnedStream</h2>
       <ul class="space-y-3">
         <li><button class="w-full btn btn-outline-light" onclick="switchTab('movies')">🎬 Movies</button></li>
@@ -70,16 +70,15 @@
     let currentTab = "";
     let editingId = null;
     let editingType = "";
+    let tmdbCache = [];
 
     // Tab Switching
     function switchTab(tab) {
       currentTab = tab;
-      document.getElementById("tmdbTab").classList.add("hidden");
-      document.getElementById("moviesTab").classList.add("hidden");
-      document.getElementById("seriesTab").classList.add("hidden");
+      ["tmdbTab","moviesTab","seriesTab"].forEach(t => document.getElementById(t).classList.add("hidden"));
       if (tab === "movies") loadMovies();
       if (tab === "series") loadSeries();
-      document.getElementById(tab + "Tab").classList.remove("hidden");
+      document.getElementById(tab+"Tab").classList.remove("hidden");
     }
 
     // Load Movies
@@ -93,7 +92,7 @@
             <img src="${m.poster}" class="card-img-top h-60 object-cover">
             <div class="card-body">
               <h5 class="card-title">${m.title}</h5>
-              <p class="text-sm">${m.year} ⭐ ${m.rating}</p>
+              <p class="text-sm">${m.year || ""} ⭐ ${m.rating || "N/A"}</p>
               <button class="btn btn-warning btn-sm" onclick="editItem('${m._id}','movie')">✏ Edit</button>
               <button class="btn btn-danger btn-sm" onclick="deleteItem('${m._id}','movie')">🗑 Delete</button>
             </div>
@@ -113,7 +112,7 @@
             <img src="${s.poster}" class="card-img-top h-60 object-cover">
             <div class="card-body">
               <h5 class="card-title">${s.title}</h5>
-              <p class="text-sm">${s.year} ⭐ ${s.rating}</p>
+              <p class="text-sm">${s.year || ""} ⭐ ${s.rating || "N/A"}</p>
               <button class="btn btn-warning btn-sm" onclick="editItem('${s._id}','series')">✏ Edit</button>
               <button class="btn btn-danger btn-sm" onclick="deleteItem('${s._id}','series')">🗑 Delete</button>
             </div>
@@ -128,6 +127,12 @@
       editingType = type;
       document.getElementById("formTitle").innerText = `Add ${type === 'movie' ? 'Movie' : 'Series'}`;
       document.getElementById("formModal").classList.remove("hidden");
+      resetForm();
+    }
+
+    // Reset form
+    function resetForm() {
+      ["title","poster","description","rating","year","slug"].forEach(id => document.getElementById(id).value = "");
     }
 
     // Close Form
@@ -191,19 +196,19 @@
     async function searchTMDB() {
       let q = document.getElementById("tmdbQuery").value;
       if (!q) return;
-      let res = await axios.get(`https://api.themoviedb.org/3/search/multi?api_key=${TMDB_KEY}&query=${q}`);
-      let items = res.data.results;
+      let res = await axios.get(`https://api.themoviedb.org/3/search/multi?api_key=${TMDB_KEY}&query=${encodeURIComponent(q)}`);
+      tmdbCache = res.data.results;
       let container = document.getElementById("results");
       container.innerHTML = "";
-      items.forEach(item => {
+      tmdbCache.forEach((item, index) => {
         let poster = item.poster_path ? `https://image.tmdb.org/t/p/w500${item.poster_path}` : "";
         container.innerHTML += `
           <div class="card bg-dark text-white card-custom">
             <img src="${poster}" class="card-img-top h-60 object-cover">
             <div class="card-body">
               <h5>${item.title || item.name}</h5>
-              <p class="text-sm">${item.overview?.substring(0, 100) || ""}...</p>
-              <button class="btn btn-success btn-sm" onclick='prefillForm(${JSON.stringify(item)})'>Use</button>
+              <p class="text-sm">${(item.overview || "").substring(0, 100)}...</p>
+              <button class="btn btn-success btn-sm" onclick="prefillForm(${index})">Use</button>
             </div>
           </div>
         `;
@@ -211,7 +216,8 @@
     }
 
     // Prefill Form from TMDB
-    function prefillForm(item) {
+    function prefillForm(index) {
+      let item = tmdbCache[index];
       document.getElementById("title").value = item.title || item.name;
       document.getElementById("poster").value = item.poster_path ? `https://image.tmdb.org/t/p/w500${item.poster_path}` : "";
       document.getElementById("description").value = item.overview || "";
@@ -222,7 +228,7 @@
       document.getElementById("formModal").classList.remove("hidden");
     }
 
-    // Default to Movies tab
+    // Default tab
     switchTab("movies");
   </script>
 </body>
