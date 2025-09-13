@@ -2,114 +2,218 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<title>Admin Dashboard</title>
+<title>Admin Dashboard SPA</title>
 <style>
-  body { font-family: Arial; max-width: 1000px; margin:auto; padding:20px; }
-  input, button, select { margin:5px; padding:5px; }
-  img { width: 80px; }
-  table { width: 100%; border-collapse: collapse; margin-top: 20px; }
-  th, td { border: 1px solid #ddd; padding: 8px; text-align:left; }
-  .tmdb-item { display:flex; align-items:center; margin-bottom:10px; }
-  .tmdb-item img { margin-right:10px; }
+body { margin:0; font-family: Arial, sans-serif; background:#f0f2f5; display:flex; }
+sidebar { width:200px; background:#1f1f1f; color:white; height:100vh; display:flex; flex-direction:column; }
+sidebar button { background:none; border:none; color:white; padding:15px; text-align:left; cursor:pointer; transition:0.2s; }
+sidebar button:hover, sidebar button.active { background:#ff3b3b; }
+main { flex:1; padding:20px; overflow:auto; transition:opacity 0.3s; }
+table { width:100%; border-collapse: collapse; margin-top:20px; background:white; }
+th, td { border:1px solid #ccc; padding:8px; text-align:left; }
+input, select, button { padding:5px; margin:3px 0; }
+img { width:50px; }
+.tmdb-item { display:flex; align-items:center; margin-bottom:10px; background:white; padding:5px; }
+.tmdb-item img { margin-right:10px; }
+.episode-list { margin:10px 0; }
+.episode-list div { display:flex; gap:5px; margin-bottom:5px; }
 </style>
 </head>
 <body>
 
-<h1>Admin Dashboard</h1>
+<sidebar>
+  <button data-page="dashboard" class="active">Dashboard</button>
+  <button data-page="movies">Movies</button>
+  <button data-page="series">Series</button>
+  <button data-page="tmdb">TMDB Search</button>
+</sidebar>
 
-<h2>TMDB Search</h2>
-<input type="text" id="searchQuery" placeholder="Movie or Series Name">
-<select id="searchType">
-  <option value="movie">Movie</option>
-  <option value="tv">Series</option>
-</select>
-<button onclick="searchTMDB()">Search</button>
-
-<div id="tmdbResults"></div>
-
-<h2>Database Stats</h2>
-<button onclick="getStats()">Refresh Stats</button>
-<div id="stats"></div>
-
-<h2>Database Content</h2>
-<button onclick="loadContent()">Load Movies & Series</button>
-<div id="dbContent"></div>
+<main id="app"></main>
 
 <script>
-const API = "https://crew-auth.vercel.app";
+const API = "https://crew-auth.vercel.app"; // your backend
+let state = { movies:[], series:[], stats:[], tmdbResults:[] };
 
-async function searchTMDB() {
-  const query = document.getElementById("searchQuery").value;
-  const type = document.getElementById("searchType").value;
-  const res = await fetch(`${API}/api/tmdb/search?query=${query}&type=${type}`);
-  const data = await res.json();
-  const container = document.getElementById("tmdbResults");
-  container.innerHTML = data.map(item => {
-    const posterLow = "https://image.tmdb.org/t/p/w200" + (item.poster_path || "");
-    const posterHigh = "https://image.tmdb.org/t/p/original" + (item.poster_path || "");
-    const backdropLow = "https://image.tmdb.org/t/p/w300" + (item.backdrop_path || "");
-    const backdropHigh = "https://image.tmdb.org/t/p/original" + (item.backdrop_path || "");
-    return `
-      <div class="tmdb-item">
-        <img src="${posterLow}" alt="">
-        <div>
-          <b>${item.title || item.name}</b> (${item.release_date || item.first_air_date})
-          <div>
-            <button onclick='addToDB(${JSON.stringify(item)}, "${type}")'>Add</button>
-          </div>
-        </div>
+// ---------------- SPA Navigation ----------------
+document.querySelectorAll('sidebar button').forEach(btn=>{
+  btn.addEventListener('click', ()=>{
+    document.querySelectorAll('sidebar button').forEach(b=>b.classList.remove('active'));
+    btn.classList.add('active');
+    Pages[btn.dataset.page]();
+  });
+});
+
+// ---------------- Pages ----------------
+const Pages = {
+  dashboard:()=>{ 
+    const app = document.getElementById('app'); app.style.opacity=0;
+    setTimeout(async()=>{
+      app.innerHTML=`<h1>Dashboard</h1>
+      <button onclick="refreshStats()">Refresh Stats</button>
+      <div id="statsContainer"></div>`;
+      await refreshStats(); app.style.opacity=1;
+    },300);
+  },
+
+  movies:()=>{ 
+    const app = document.getElementById('app'); app.style.opacity=0;
+    setTimeout(()=>{
+      app.innerHTML=`<h1>Movies</h1>
+      <button onclick="loadMovies()">Reload</button>
+      <div id="moviesContainer"></div>`;
+      loadMovies(); app.style.opacity=1;
+    },300);
+  },
+
+  series:()=>{ 
+    const app = document.getElementById('app'); app.style.opacity=0;
+    setTimeout(()=>{
+      app.innerHTML=`<h1>Series</h1>
+      <button onclick="loadSeries()">Reload</button>
+      <div id="seriesContainer"></div>`;
+      loadSeries(); app.style.opacity=1;
+    },300);
+  },
+
+  tmdb:()=>{ 
+    const app = document.getElementById('app'); app.style.opacity=0;
+    setTimeout(()=>{
+      app.innerHTML=`<h1>TMDB Search</h1>
+      <input id="tmdbQuery" placeholder="Search">
+      <select id="tmdbType"><option value="movie">Movie</option><option value="tv">Series</option></select>
+      <button onclick="searchTMDB()">Search</button>
+      <div id="tmdbResults"></div>`;
+      app.style.opacity=1;
+    },300);
+  }
+};
+
+// ---------------- API & CRUD ----------------
+async function refreshStats(){
+  const res = await fetch(`${API}/api/stats`); const data=await res.json();
+  state.stats=data;
+  document.getElementById('statsContainer').innerHTML=`Movies:${data.movies}<br>Series:${data.series}<br>Episodes:${data.episodes}`;
+}
+
+// Load movies with inline editing
+async function loadMovies(){
+  const res = await fetch(`${API}/api/content`); state.movies = await res.json();
+  const container=document.getElementById('moviesContainer');
+  container.innerHTML = `<table>
+  <tr><th>Poster</th><th>Title</th><th>Year</th><th>Actions</th></tr>
+  ${state.movies.map(m=>`
+    <tr>
+      <td><img src="${m.posterLow}" alt=""></td>
+      <td contenteditable onblur="updateMovie('${m._id}', 'title', this.innerText)">${m.title}</td>
+      <td contenteditable onblur="updateMovie('${m._id}', 'year', parseInt(this.innerText))">${m.year}</td>
+      <td>
+        <button onclick="deleteMovie('${m._id}')">Delete</button>
+      </td>
+    </tr>`).join('')}
+  </table>`;
+}
+
+async function loadSeries(){
+  const res = await fetch(`${API}/api/series`); state.series = await res.json();
+  const container = document.getElementById('seriesContainer');
+  container.innerHTML = state.series.map(s=>`
+    <div style="margin-bottom:20px; background:white; padding:10px;">
+      <img src="${s.posterLow}" alt="">
+      <input value="${s.title}" onblur="updateSeries('${s._id}','title',this.value)">
+      <input type="number" value="${s.year}" onblur="updateSeries('${s._id}','year',parseInt(this.value))">
+      <div class="episode-list" id="episodes-${s._id}">
+        ${s.episodes.map((e,i)=>`<div>Ep ${i+1}: <input value="${e.ep}" onblur="updateEpisode('${s._id}','${i}','ep',this.value)"> <input value="${e.slug}" onblur="updateEpisode('${s._id}','${i}','slug',this.value)"> <button onclick="deleteEpisode('${s._id}','${i}')">Delete</button></div>`).join('')}
       </div>
-    `;
-  }).join("");
+      <button onclick="addEpisode('${s._id}')">Add Episode</button>
+      <button onclick="deleteSeries('${s._id}')">Delete Series</button>
+    </div>
+  `).join('');
 }
 
-async function addToDB(item, type) {
+// ---------------- Inline Editing ----------------
+async function updateMovie(id, field, value){
+  await fetch(`${API}/api/content/${id}`, {method:'PUT', headers:{'Content-Type':'application/json'}, body:JSON.stringify({[field]:value})});
+}
+
+async function updateSeries(id, field, value){
+  await fetch(`${API}/api/series/${id}`, {method:'PUT', headers:{'Content-Type':'application/json'}, body:JSON.stringify({[field]:value})});
+}
+
+// Episode Management
+async function updateEpisode(seriesId, index, field, value){
+  const series = state.series.find(s=>s._id===seriesId);
+  if(!series) return;
+  series.episodes[index][field]=value;
+  await fetch(`${API}/api/series/${seriesId}`, {method:'PUT', headers:{'Content-Type':'application/json'}, body:JSON.stringify(series)});
+}
+
+async function deleteEpisode(seriesId,index){
+  const series = state.series.find(s=>s._id===seriesId);
+  if(!series) return;
+  series.episodes.splice(index,1);
+  await fetch(`${API}/api/series/${seriesId}`, {method:'PUT', headers:{'Content-Type':'application/json'}, body:JSON.stringify(series)});
+  loadSeries();
+}
+
+async function addEpisode(seriesId){
+  const series = state.series.find(s=>s._id===seriesId);
+  if(!series) return;
+  const epNum = series.episodes.length+1;
+  const newEp = {ep:'Episode '+epNum, slug:''};
+  series.episodes.push(newEp);
+  await fetch(`${API}/api/series/${seriesId}`, {method:'PUT', headers:{'Content-Type':'application/json'}, body:JSON.stringify(series)});
+  loadSeries();
+}
+
+// Delete functions
+async function deleteMovie(id){ await fetch(`${API}/api/content/${id}`,{method:'DELETE'}); loadMovies();}
+async function deleteSeries(id){ await fetch(`${API}/api/series/${id}`,{method:'DELETE'}); loadSeries();}
+
+// ---------------- TMDB Search ----------------
+async function searchTMDB(){
+  const query=document.getElementById('tmdbQuery').value;
+  const type=document.getElementById('tmdbType').value;
+  if(!query) return alert('Enter search');
+  const res=await fetch(`${API}/api/tmdb/search?query=${encodeURIComponent(query)}&type=${type}`);
+  const data=await res.json();
+  state.tmdbResults=data;
+  const container=document.getElementById('tmdbResults');
+  container.innerHTML = data.map(item=>{
+    const posterLow="https://image.tmdb.org/t/p/w200"+(item.poster_path||"");
+    const posterHigh="https://image.tmdb.org/t/p/original"+(item.poster_path||"");
+    const backdropLow="https://image.tmdb.org/t/p/w300"+(item.backdrop_path||"");
+    const backdropHigh="https://image.tmdb.org/t/p/original"+(item.backdrop_path||"");
+    return `<div class="tmdb-item">
+      <img src="${posterLow}" alt="">
+      <div>
+        <b>${item.title||item.name}</b> (${item.release_date||item.first_air_date})
+        <div><button onclick='addTMDB("${type}",${JSON.stringify(item)})'>Add</button></div>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+async function addTMDB(type,item){
   const payload = {
-    title: item.title || item.name,
-    posterLow: "https://image.tmdb.org/t/p/w200" + (item.poster_path || ""),
-    posterHigh: "https://image.tmdb.org/t/p/original" + (item.poster_path || ""),
-    backdropLow: "https://image.tmdb.org/t/p/w300" + (item.backdrop_path || ""),
-    backdropHigh: "https://image.tmdb.org/t/p/original" + (item.backdrop_path || ""),
-    description: item.overview,
-    rating: item.vote_average,
-    slug: (item.id).toString(),
-    year: parseInt((item.release_date || item.first_air_date || "0").split("-")[0]),
-    genres: []
+    title:item.title||item.name,
+    posterLow:"https://image.tmdb.org/t/p/w200"+(item.poster_path||""),
+    posterHigh:"https://image.tmdb.org/t/p/original"+(item.poster_path||""),
+    backdropLow:"https://image.tmdb.org/t/p/w300"+(item.backdrop_path||""),
+    backdropHigh:"https://image.tmdb.org/t/p/original"+(item.backdrop_path||""),
+    description:item.overview,
+    rating:item.vote_average,
+    slug:(item.id).toString(),
+    year:parseInt((item.release_date||item.first_air_date||"0").split("-")[0]),
+    genres:[]
   };
-  const url = type === "movie" ? "/api/content" : "/api/series";
-  await fetch(API + url, { method:"POST", headers:{"Content-Type":"application/json"}, body: JSON.stringify(payload) });
-  alert("Added to DB!");
+  const url=type==='movie'?'/api/content':'/api/series';
+  await fetch(`${API}${url}`,{method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify(payload)});
+  alert('Added!');
+  type==='movie'?loadMovies():loadSeries();
 }
 
-async function getStats() {
-  const res = await fetch(API + "/api/stats");
-  const data = await res.json();
-  document.getElementById("stats").innerText = `Movies: ${data.movies}, Series: ${data.series}, Episodes: ${data.episodes}`;
-}
-
-async function loadContent() {
-  const moviesRes = await fetch(API + "/api/content");
-  const seriesRes = await fetch(API + "/api/series");
-  const movies = await moviesRes.json();
-  const series = await seriesRes.json();
-
-  const container = document.getElementById("dbContent");
-  container.innerHTML = "<h3>Movies</h3>" + movies.map(m => `
-    <div>
-      <img src="${m.posterLow}" alt=""> ${m.title} <button onclick='editMovie("${m._id}")'>Edit</button>
-    </div>
-  `).join("");
-
-  container.innerHTML += "<h3>Series</h3>" + series.map(s => `
-    <div>
-      <img src="${s.posterLow}" alt=""> ${s.title} <button onclick='editSeries("${s._id}")'>Edit</button>
-    </div>
-  `).join("");
-}
-
-function editMovie(id){ alert("Edit movie ID: "+id) }
-function editSeries(id){ alert("Edit series ID: "+id) }
-
+// Initialize
+Pages.dashboard();
 </script>
 </body>
 </html>
