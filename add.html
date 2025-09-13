@@ -1,0 +1,243 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Admin Dashboard</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<style>
+  .fade { transition: opacity 0.3s ease; }
+  .alert { position: fixed; top: 10px; right: 10px; padding: 12px 20px; border-radius: 6px; color: white; z-index: 1000; }
+</style>
+</head>
+<body class="bg-gray-100 flex h-screen">
+
+<!-- Sidebar -->
+<aside class="w-64 bg-gray-900 text-white flex flex-col">
+  <h2 class="text-2xl font-bold p-4 border-b border-gray-700">Admin</h2>
+  <nav class="flex flex-col flex-1">
+    <button class="nav-btn active p-4 text-left hover:bg-red-600" data-page="dashboard">Dashboard</button>
+    <button class="nav-btn p-4 text-left hover:bg-red-600" data-page="movies">Movies</button>
+    <button class="nav-btn p-4 text-left hover:bg-red-600" data-page="series">Series</button>
+    <button class="nav-btn p-4 text-left hover:bg-red-600" data-page="tmdb">TMDB Search</button>
+  </nav>
+</aside>
+
+<main id="app" class="flex-1 p-6 overflow-auto fade"></main>
+
+<script>
+const API = "https://crew-auth.vercel.app";
+let state = {movies:[], series:[], stats:[], tmdbResults:[]};
+
+// Sidebar navigation
+document.querySelectorAll('.nav-btn').forEach(btn=>{
+  btn.addEventListener('click', ()=>{
+    document.querySelectorAll('.nav-btn').forEach(b=>b.classList.remove('active'));
+    btn.classList.add('active');
+    Pages[btn.dataset.page]();
+  });
+});
+
+// Alerts
+function showAlert(message,type='success'){
+  const div=document.createElement('div');
+  div.className='alert ' + (type==='success'?'bg-green-500':'bg-red-500');
+  div.innerText=message;
+  document.body.appendChild(div);
+  setTimeout(()=>document.body.removeChild(div),3000);
+}
+
+// ---------------- Pages ----------------
+const Pages = {
+  dashboard: async()=>{
+    const app=document.getElementById('app'); app.style.opacity=0;
+    setTimeout(async()=>{
+      app.innerHTML=`
+        <h1 class="text-3xl font-bold mb-4">Dashboard</h1>
+        <button class="bg-red-600 text-white px-4 py-2 rounded" onclick="refreshStats()">Refresh Stats</button>
+        <div id="statsContainer" class="mt-4 text-lg"></div>`;
+      await refreshStats();
+      app.style.opacity=1;
+    },300);
+  },
+  movies: async()=>{ const app=document.getElementById('app'); app.style.opacity=0;
+    setTimeout(async()=>{ app.innerHTML=`<h1 class="text-3xl font-bold mb-4">Movies</h1><div id="moviesContainer"></div>`; await loadMovies(); app.style.opacity=1; },300);
+  },
+  series: async()=>{ const app=document.getElementById('app'); app.style.opacity=0;
+    setTimeout(async()=>{ app.innerHTML=`<h1 class="text-3xl font-bold mb-4">Series</h1><div id="seriesContainer"></div>`; await loadSeries(); app.style.opacity=1; },300);
+  },
+  tmdb: async()=>{
+    const app=document.getElementById('app'); app.style.opacity=0;
+    setTimeout(()=>{
+      app.innerHTML=`
+        <h1 class="text-3xl font-bold mb-4">TMDB Search</h1>
+        <div class="flex gap-2 mb-4">
+          <input id="tmdbQuery" class="border rounded px-2 py-1 flex-1" placeholder="Search...">
+          <select id="tmdbType" class="border rounded px-2 py-1">
+            <option value="movie">Movie</option>
+            <option value="tv">Series</option>
+          </select>
+          <button id="tmdbSearchBtn" class="bg-red-600 text-white px-4 py-1 rounded">Search</button>
+        </div>
+        <div id="tmdbResults" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4"></div>`;
+      document.getElementById('tmdbSearchBtn').addEventListener('click', searchTMDB);
+      app.style.opacity=1;
+    },300);
+  }
+};
+
+// ---------------- API & CRUD ----------------
+async function refreshStats(){
+  const res=await fetch(`${API}/api/stats`);
+  state.stats=await res.json();
+  document.getElementById('statsContainer').innerHTML=`
+    <div class="p-4 bg-white rounded shadow">
+      <p>Movies: <b>${state.stats.movies}</b></p>
+      <p>Series: <b>${state.stats.series}</b></p>
+      <p>Episodes: <b>${state.stats.episodes}</b></p>
+    </div>`;
+}
+
+// ---------------- Movies ----------------
+async function loadMovies(){
+  const res=await fetch(`${API}/api/content`);
+  state.movies=await res.json();
+  const container=document.getElementById('moviesContainer');
+  container.innerHTML='';
+  state.movies.forEach(m=>{
+    const div=document.createElement('div');
+    div.className='p-4 bg-white rounded shadow mb-4 flex items-center gap-4';
+    div.id=`movie-${m._id}`;
+    div.innerHTML=`
+      <img src="${m.posterLow}" class="w-20 rounded">
+      <div class="flex-1">
+        <input value="${m.title}" class="movie-title border rounded px-2 py-1 w-full mb-1">
+        <input type="number" value="${m.year}" class="movie-year border rounded px-2 py-1 w-full">
+      </div>
+      <div class="flex flex-col gap-1">
+        <button class="bg-green-500 text-white px-2 py-1 rounded save-movie">Save</button>
+        <button class="bg-red-500 text-white px-2 py-1 rounded delete-movie">Delete</button>
+      </div>`;
+    container.appendChild(div);
+
+    div.querySelector('.save-movie').addEventListener('click',()=>saveMovieEdit(m._id));
+    div.querySelector('.delete-movie').addEventListener('click',()=>deleteMovie(m._id));
+  });
+}
+
+// ---------------- Series ----------------
+async function loadSeries(){
+  const res=await fetch(`${API}/api/series`);
+  state.series=await res.json();
+  const container=document.getElementById('seriesContainer');
+  container.innerHTML='';
+  state.series.forEach(s=>{
+    const div=document.createElement('div');
+    div.className='p-4 bg-white rounded shadow mb-4';
+    div.id=`series-${s._id}`;
+    div.innerHTML=`
+      <div class="flex items-center gap-4 mb-2">
+        <img src="${s.posterLow}" class="w-20 rounded">
+        <input value="${s.title}" class="series-title border rounded px-2 py-1 flex-1">
+        <input type="number" value="${s.year}" class="series-year border rounded px-2 py-1 w-24">
+      </div>
+      <div class="episode-list mb-2" id="episodes-${s._id}"></div>
+      <div class="flex gap-2">
+        <button class="bg-blue-500 text-white px-4 py-1 rounded add-episode">Add Episode Later</button>
+        <button class="bg-green-500 text-white px-4 py-1 rounded save-series">Save</button>
+        <button class="bg-red-500 text-white px-4 py-1 rounded delete-series">Delete Series</button>
+      </div>`;
+    container.appendChild(div);
+
+    // Episodes
+    const episodesContainer = div.querySelector('.episode-list');
+    s.episodes.forEach((e,i)=>{
+      const epDiv=document.createElement('div');
+      epDiv.className='flex gap-2 mb-1';
+      epDiv.innerHTML=`Ep ${i+1}: <input value="${e.ep}" class="border px-2 py-1"><input value="${e.slug}" class="border px-2 py-1"><button class="bg-red-500 text-white px-2 py-1 rounded">Delete</button>`;
+      episodesContainer.appendChild(epDiv);
+
+      const inputs = epDiv.querySelectorAll('input');
+      inputs[0].addEventListener('blur',()=>updateEpisode(s._id,i,'ep',inputs[0].value));
+      inputs[1].addEventListener('blur',()=>updateEpisode(s._id,i,'slug',inputs[1].value));
+      epDiv.querySelector('button').addEventListener('click',()=>deleteEpisode(s._id,i));
+    });
+
+    div.querySelector('.save-series').addEventListener('click',()=>saveSeriesEdit(s._id));
+    div.querySelector('.delete-series').addEventListener('click',()=>deleteSeries(s._id));
+    div.querySelector('.add-episode').addEventListener('click',()=>addEpisodeLater(s._id));
+  });
+}
+
+// ---------------- Inline Edit & Episodes ----------------
+async function saveMovieEdit(id){
+  const row=document.getElementById(`movie-${id}`);
+  const title=row.querySelector('.movie-title').value;
+  const year=parseInt(row.querySelector('.movie-year').value);
+  try{ await fetch(`${API}/api/content/${id}`,{method:'PUT',headers:{'Content-Type':'application/json'},body:JSON.stringify({title,year})}); showAlert('Movie updated!'); }
+  catch(e){showAlert('Error updating movie','error');}
+}
+async function saveSeriesEdit(id){
+  const container=document.getElementById(`series-${id}`);
+  const title=container.querySelector('.series-title').value;
+  const year=parseInt(container.querySelector('.series-year').value);
+  try{ await fetch(`${API}/api/series/${id}`,{method:'PUT',headers:{'Content-Type':'application/json'},body:JSON.stringify({title,year})}); showAlert('Series updated!'); }
+  catch(e){showAlert('Error updating series','error');}
+}
+async function addEpisodeLater(seriesId){
+  const epNum=prompt('Enter episode name/number:'); if(!epNum) return;
+  const slug=prompt('Enter episode slug:')||'';
+  const series=state.series.find(s=>s._id===seriesId); series.episodes.push({ep:epNum,slug});
+  try{ await fetch(`${API}/api/series/${seriesId}`,{method:'PUT',headers:{'Content-Type':'application/json'},body:JSON.stringify(series)}); showAlert('Episode added!'); loadSeries(); }
+  catch(e){showAlert('Error adding episode','error');}
+}
+async function deleteMovie(id){ await fetch(`${API}/api/content/${id}`,{method:'DELETE'}); loadMovies(); showAlert('Movie deleted'); }
+async function deleteSeries(id){ await fetch(`${API}/api/series/${id}`,{method:'DELETE'}); loadSeries(); showAlert('Series deleted'); }
+async function updateEpisode(seriesId,index,field,value){ const series=state.series.find(s=>s._id===seriesId); if(!series) return; series.episodes[index][field]=value; await fetch(`${API}/api/series/${seriesId}`,{method:'PUT',headers:{'Content-Type':'application/json'},body:JSON.stringify(series)}); }
+
+// ---------------- TMDB ----------------
+async function searchTMDB(){
+  const query=document.getElementById('tmdbQuery').value;
+  const type=document.getElementById('tmdbType').value;
+  if(!query) return showAlert('Enter search query','error');
+  const res=await fetch(`${API}/api/tmdb/search?query=${encodeURIComponent(query)}&type=${type}`);
+  const data=await res.json(); state.tmdbResults=data;
+  const container=document.getElementById('tmdbResults'); container.innerHTML='';
+  data.forEach(item=>{
+    const div=document.createElement('div');
+    div.className='p-4 bg-white rounded shadow flex gap-4';
+    const posterLow="https://image.tmdb.org/t/p/w200"+(item.poster_path||'');
+    div.innerHTML=`<img src="${posterLow}" class="w-24 rounded"><div class="flex-1"><b>${item.title||item.name}</b> (${item.release_date||item.first_air_date})</div>`;
+    const addBtn=document.createElement('button');
+    addBtn.className='bg-green-500 text-white px-4 py-1 rounded mt-2';
+    addBtn.innerText='Add';
+    addBtn.addEventListener('click',()=>addTMDB(type,item));
+    div.querySelector('div.flex-1').appendChild(addBtn);
+    container.appendChild(div);
+  });
+}
+
+async function addTMDB(type,item){
+  const payload={
+    title:item.title||item.name,
+    posterLow:"https://image.tmdb.org/t/p/w200"+(item.poster_path||""),
+    posterHigh:"https://image.tmdb.org/t/p/original"+(item.poster_path||""),
+    backdropLow:"https://image.tmdb.org/t/p/w300"+(item.backdrop_path||""),
+    backdropHigh:"https://image.tmdb.org/t/p/original"+(item.backdrop_path||""),
+    description:item.overview,
+    rating:item.vote_average,
+    slug:(item.id).toString(),
+    year:parseInt((item.release_date||item.first_air_date||'0').split('-')[0]),
+    genres:[]
+  };
+  const url=type==='movie'?'/api/content':'/api/series';
+  await fetch(`${API}${url}`,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(payload)});
+  showAlert('Added successfully!');
+  type==='movie'?loadMovies():loadSeries();
+}
+
+// Initialize
+Pages.dashboard();
+</script>
+</body>
+  </html>
+  
