@@ -2,88 +2,49 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <title>BurnedStream Live</title>
-  <script src="https://cdn.jwplayer.com/libraries/aVr2lJgW.js"></script>
-  <style>
-    body { margin:0; font-family:sans-serif; background:#0a0a0f; color:#eee; }
-    header { background:#1a1a2e; padding:10px; color:#fff; text-align:center; }
-    #player { width:100%; height:40vh; max-height:360px; }
-    #chat { width:100%; height:45vh; border:none; }
-    #channelsBtn { background:#6a0dad; color:#fff; border:none; padding:10px; width:100%; font-size:16px; cursor:pointer; }
-    #channels { display:none; max-height:40vh; overflow-y:auto; background:#111; }
-    .channel { padding:10px; border-bottom:1px solid #333; cursor:pointer; }
-    .channel:hover { background:#6a0dad; }
-    @media (max-width:768px) {
-      #player { height:35vh; }
-      #chat { height:50vh; }
-    }
-  </style>
+  <title>Watch - BurnedStream</title>
+  <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
+  <script src="https://cdn.tailwindcss.com"></script>
 </head>
-<body>
+<body class="bg-gray-900 text-white">
+  <div class="container-fluid p-0">
+    <div class="relative h-[70vh] w-full bg-black">
+      <iframe id="player" class="w-full h-full" allowfullscreen></iframe>
+    </div>
+    <div class="p-4">
+      <h1 id="title" class="text-3xl font-bold"></h1>
+      <p id="desc" class="text-sm text-gray-300 my-2"></p>
+      <p class="text-warning">⭐ <span id="rating"></span></p>
+    </div>
+  </div>
 
-<header>
-  <h2>🔥 ERENxBurnedStream 🔥</h2>
-</header>
+  <script>
+    const API = "https://crew-auth.vercel.app/api";
+    const params = new URLSearchParams(window.location.search);
+    const slug = params.get("slug");
 
-<div id="player"></div>
-
-<button id="channelsBtn">📺 Select Channel</button>
-<div id="channels"></div>
-
-<iframe id="chat"></iframe>
-
-<script>
-  const m3uUrl = "https://raw.githubusercontent.com/MovieCity/iptv-jp/refs/heads/main/jp.m3u";
-  const cboxBase = "https://www5.cbox.ws/box/?boxid=958516&boxtag="; // your cbox
-  let currentPlayer;
-
-  // Toggle channel list
-  document.getElementById("channelsBtn").onclick = () => {
-    const box = document.getElementById("channels");
-    box.style.display = box.style.display === "block" ? "none" : "block";
-  };
-
-  // Load m3u and build channel list
-  fetch(m3uUrl)
-    .then(r => r.text())
-    .then(text => {
-      const lines = text.split("\n");
-      const channelsDiv = document.getElementById("channels");
-
-      for (let i=0; i<lines.length; i++) {
-        if (lines[i].startsWith("#EXTINF")) {
-          const title = lines[i].split(",")[1]?.trim() || "Unknown";
-          const streamUrl = lines[i+1]?.trim();
-          if (!streamUrl || streamUrl.startsWith("#")) continue;
-
-          const div = document.createElement("div");
-          div.className = "channel";
-          div.textContent = title;
-          div.onclick = () => loadChannel(title, streamUrl);
-          channelsDiv.appendChild(div);
-        }
+    async function loadVideo() {
+      if (!slug) {
+        document.body.innerHTML = "<h1 class='text-center mt-20'>❌ No video slug</h1>";
+        return;
       }
-    });
+      document.getElementById("player").src = `https://burnedplayer.pages.dev/player?v=${slug}`;
 
-  // Load a channel
-  function loadChannel(name, url) {
-    if (currentPlayer) currentPlayer.remove();
+      // fetch details
+      let [movies, series] = await Promise.all([
+        axios.get(`${API}/content`),
+        axios.get(`${API}/series`)
+      ]);
+      let all = [...movies.data, ...series.data];
+      let item = all.find(i => i.slug === slug);
+      if (item) {
+        document.getElementById("title").innerText = item.title;
+        document.getElementById("desc").innerText = item.description;
+        document.getElementById("rating").innerText = item.rating || "N/A";
+      }
+    }
 
-    currentPlayer = jwplayer("player").setup({
-      file: url,
-      title: name,
-      width: "100%",
-      aspectratio: "16:9",
-      autostart: true,
-      skin: { name: "seven" }
-    });
-
-    // Reload chat with channel name as tag
-    const chatFrame = document.getElementById("chat");
-    chatFrame.src = cboxBase + encodeURIComponent(name);
-    document.getElementById("channels").style.display = "none";
-  }
-</script>
-
+    loadVideo();
+  </script>
 </body>
 </html>
