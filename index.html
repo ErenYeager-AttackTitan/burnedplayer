@@ -7,24 +7,10 @@
   <script src="https://cdn.tailwindcss.com"></script>
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
   <style>
-    .row-scroll {
-      display: flex;
-      overflow-x: auto;
-      gap: 1rem;
-      scroll-behavior: smooth;
-    }
-    .row-scroll::-webkit-scrollbar {
-      display: none;
-    }
-    .card-custom {
-      min-width: 180px;
-      flex-shrink: 0;
-      transition: transform 0.3s ease;
-    }
-    .card-custom:hover {
-      transform: scale(1.08);
-      z-index: 10;
-    }
+    .row-scroll { display: flex; overflow-x: auto; gap: 1rem; scroll-behavior: smooth; }
+    .row-scroll::-webkit-scrollbar { display: none; }
+    .card-custom { min-width: 160px; flex-shrink: 0; transition: transform 0.3s ease; }
+    .card-custom:hover { transform: scale(1.08); z-index: 10; }
   </style>
 </head>
 <body class="bg-gray-900 text-white">
@@ -38,10 +24,10 @@
   </nav>
 
   <!-- Hero -->
-  <section id="hero" class="relative h-[60vh] md:h-[80vh] flex items-center justify-center bg-black">
-    <img id="heroPoster" class="absolute inset-0 w-full h-full object-cover opacity-50">
-    <div class="relative text-center">
-      <h1 id="heroTitle" class="text-4xl md:text-6xl font-bold mb-4"></h1>
+  <section id="hero" class="relative h-[60vh] md:h-[80vh] flex items-center justify-center bg-black mt-[56px]">
+    <img id="heroPoster" class="absolute inset-0 w-full h-full object-cover opacity-40">
+    <div class="relative text-center px-4">
+      <h1 id="heroTitle" class="text-3xl md:text-6xl font-bold mb-4 drop-shadow-lg"></h1>
       <p id="heroDesc" class="max-w-xl mx-auto text-sm md:text-lg mb-4"></p>
       <a id="heroBtn" href="#" class="btn btn-danger px-4">▶ Watch</a>
     </div>
@@ -79,8 +65,8 @@
     function setHero(item) {
       document.getElementById("heroPoster").src = item.poster;
       document.getElementById("heroTitle").innerText = item.title;
-      document.getElementById("heroDesc").innerText = item.description?.substring(0, 150) || "";
-      document.getElementById("heroBtn").href = `watch.html?slug=${item.slug}`;
+      document.getElementById("heroDesc").innerText = item.description?.substring(0, 120) || "";
+      document.getElementById("heroBtn").href = `watch.html?type=${item.type}&id=${item._id}`;
     }
 
     function renderRow(rowId, items) {
@@ -89,11 +75,11 @@
       items.forEach(item => {
         let card = `
           <div class="card bg-dark text-white card-custom shadow-lg">
-            <img src="${item.poster}" class="card-img-top h-72 object-cover" alt="${item.title}">
+            <img src="${item.poster}" class="card-img-top h-64 object-cover" alt="${item.title}">
             <div class="card-body p-2">
               <h6 class="card-title text-truncate">${item.title}</h6>
               <p class="text-warning text-xs">⭐ ${item.rating || "N/A"}</p>
-              <a href="watch.html?slug=${item.slug}" class="btn btn-danger btn-sm w-full">Watch</a>
+              <a href="watch.html?type=${item.type}&id=${item._id}" class="btn btn-danger btn-sm w-full">Watch</a>
             </div>
           </div>
         `;
